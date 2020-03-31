@@ -32,4 +32,4 @@ Ht = rand(userNumber,serverNumber,sub_bandNumber);   %用户到服务器的增益矩阵
 Hr = rand(userNumber,serverNumber,sub_bandNumber);   %服务器到用户的增益矩阵
 F = zeros(userNumber,serverNumber);  %服务器计算资源分配矩阵
 P = zeros(userNumber,1); %用户发射功率分配矩阵
-[G,F,P] = optimal(U,Fu,S,Su,Tu,sub_band,B,W,Pur,Pu,Ht,Hr,userNumber,serverNumber,sub_bandNumber);
+[Ground,F,P] = optimal(U,Fu,S,Su,Tu,sub_band,B,W,Pur,Pu,Ht,Hr,userNumber,serverNumber,sub_bandNumber);
