@@ -1,5 +1,5 @@
 function [Us,num] = genUs(G,i)
-%生成服务器对应的用户矩阵
+%GenUs 生成服务器对应的用户矩阵
     [~,n,z] = size(G);
     num = 0;
     Us = [];

@@ -1,5 +1,5 @@
-function [P,Q] = pra(G,beta_time,beta_enengy,Tu,tu_local,Eu_local,lamda,W,Ht,Pu,Sigma,r,Epsilon,beta)
-%uplink power resourses allocation 上行链路功率资源分配
+function [P,Q] = pra(G,beta_time,beta_enengy,Tu,tu_local,Eu_local,W,Ht,Pu,Sigma,r,Epsilon,beta)
+%PRA uplink power resourses allocation 上行链路功率资源分配
     [userNumber,serverNumber,~] = size(G);
     P = sym('p',[1 userNumber]);   %用户发射功率分配矩阵
     for server = 1:serverNumber
@@ -7,8 +7,8 @@ function [P,Q] = pra(G,beta_time,beta_enengy,Tu,tu_local,Eu_local,lamda,W,Ht,Pu,
         if n > 0
             for user = 1:n
                 Pi = getPi(G,Pu,Sigma,Ht,user,server);
-                Phi_user = beta_time(Us(user)) * Tu(Us(user)).data * lamda(Us(user)) / tu_local(Us(user)) / W;
-                Theta_user = beta_enengy(Us(user)) * Tu(Us(user)).data * lamda(Us(user)) / Eu_local(Us(user)) / W;
+                Phi_user = beta_time(Us(user)) * Tu(Us(user)).data  / tu_local(Us(user)) / W;
+                Theta_user = beta_enengy(Us(user)) * Tu(Us(user)).data  / Eu_local(Us(user)) / W;
                 if server == 1 && user== 1
                     f = ( Phi_user + Theta_user * P(Us(user)) ) / log2( 1 + P(Us(user)) * Pi );
                 else
@@ -43,4 +43,23 @@ function f = convertToAcceptArray(old_f)
         r = old_f(X{:});
     end
     f = @new_f;
+end
+
+function Pi = getPi(G,Pu,Sigma,Ht,user,server)
+%GetPi 计算Pi_us
+    Pi = 0;
+    [~,serverNumber,sub_bandNumber] = size(G);
+    for j = 1:sub_bandNumber
+        denominator = 0;
+        for i = 1:serverNumber
+            if i ~= server
+                [Us,n] = genUs(G,i);
+                for k = 1:n
+                    denominator = denominator + G(Us(k),i,j) * Pu(Us(k)) * Ht(Us(k),i,j);
+                end
+            end
+        end
+        denominator = denominator + Sigma^2;
+        Pi = Ht(user,server,j)/denominator;
+    end
 end

@@ -1,5 +1,5 @@
 function [F,T] = cra(G,Fs,Eta_user)
-%computer resourses allocation 运算能力分配
+%CRA computer resourses allocation 运算能力分配
     [userNumber,serverNumber,~] = size(G);
     Eta_sum = sum(Eta_user);
     F = zeros(userNumber,serverNumber);
