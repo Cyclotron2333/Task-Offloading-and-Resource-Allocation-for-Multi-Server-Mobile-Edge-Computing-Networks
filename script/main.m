@@ -15,9 +15,8 @@ for i = 1:userNumber    %初始化任务矩阵
     Tu(i).circle = 40 * rand;
     Tu(i).output = 4 * rand;
 end
-B = 20e6;   %系统总带宽
+W = 20e6;   %系统总带宽
 sub_bandNumber = 10;    %子带个数
-W = B/sub_bandNumber;   %子带大小
 sub_band = 1:sub_bandNumber;    %子带矩阵
 Ground = zeros(userNumber,serverNumber,sub_bandNumber);  %频带和服务器分配矩阵
 Pu = zeros(userNumber,1);    %用户最大输出功率矩阵
