@@ -16,26 +16,29 @@ function [J, X, P, F] = ta( ...
     %alpha=0.98;     
     %k=1000;         
 
-    X= genRandSeed(userNumber, serverNumber,sub_bandNumber);    %随机得到初始解
+    x= genRandSeed(userNumber, serverNumber,sub_bandNumber);    %随机得到初始解
     
     while(T>T_min)
         for I=1:k
             G = convert2G(pop,userNumber, serverNumber,sub_bandNumber);
-            fx = Fx(G,para);
-            x_new = getneighbourhood(X,userNumber, serverNumber,sub_bandNumber);
+            [fx, P, F] = Fx(G,para);
+            x_new = getneighbourhood(x,userNumber, serverNumber,sub_bandNumber);
             G_new = convert2G(pop,userNumber, serverNumber,sub_bandNumber);
-            fx_new = Fx(G_new,para);
+            [fx_new, P_new, F_new] = Fx(G_new,para);
             delta = fx_new-fx;
             if (delta<0)
-                X = x_new;
+                x = x_new;
+                J = fx_new;
+                X = x;
+                P = P_new;
+                F = F_new;
                 if fx_new < minimal_cost
-                    J = fx_new;
                     return;
                 end
             else
-                P=getProbability(delta,T);
-                if(P>rand)
-                    X=x_new;
+                pro=getProbability(delta,T);
+                if(pro>rand)
+                    x=x_new;
                 end
             end
         end
@@ -76,8 +79,10 @@ function G = convert2G(pop,userNumber, serverNumber,sub_bandNumber)
     G = zeros(userNumber, serverNumber,sub_bandNumber);
     for user=1:userNumber
         for server=1:serverNumber
-            sub = pop(userNumber, serverNumber);
-            G(userNumber, serverNumber,sub) = 1;
+            sub = pop(user, server);
+            if sub ~= 0
+                X(user, server,sub) = 1;
+            end
         end
     end
 end
@@ -87,17 +92,17 @@ function pop = genRandSeed(userNumber, serverNumber,sub_bandNumber)
     pop = zeros(userNumber, serverNumber);
     for server=1:serverNumber
         if sub_bandNumber >= userNumber
-            pop(s,:,server) = randperm(sub_bandNumber+1,userNumber) - 1;    %为每个用户随机分配最多N个用户
+            pop(:,server) = randperm(sub_bandNumber+1,userNumber) - 1;    %为每个用户随机分配最多N个用户
         else
             temp = randperm(sub_bandNumber+1,sub_bandNumber) - 1;
             member = randperm(userNumber,sub_bandNumber);
-            pop(s,member,server) = temp;
+            pop(member,server) = temp;
         end
     end
     for user=1:userNumber
         number = 0;
         for server=1:serverNumber   %统计改维度种不为零元素个数
-            if pop(s,user,server) ~= 0
+            if pop(user,server) ~= 0
                 number = number + 1; 
             end
         end
@@ -108,7 +113,7 @@ function pop = genRandSeed(userNumber, serverNumber,sub_bandNumber)
                 if server~=chosen
                     index = index +1;
                     if index~=chosen
-                        pop(s,user,server) = 0;  %用户随机选择一个被分配的服务器（也有可能是自己）
+                        pop(user,server) = 0;  %用户随机选择一个被分配的服务器（也有可能是自己）
                     end
                 end
             end
@@ -116,21 +121,20 @@ function pop = genRandSeed(userNumber, serverNumber,sub_bandNumber)
     end
 end
 
-%%Fx.m
-function fx=Fx(x,para)
+function [Jx, P, F] = Fx(x,para)
     [~,serverNumber,~] = size(x);
     for server = 1:serverNumber
        [Us,n] = genUs(x,server);
         if n > 0
             for user = 1:n
                 Kappa = getKappa(x,user,server,para.beta_time,para.beta_enengy,para.Tu,para.tu_local,para.Eu_local,para.W,para.Hr,para.Pur,para.Ps);
-                fx = 1 - Kappa;
+                Jx = 1 - Kappa;
             end
         end
     end
-    [~,res_pra] = pra(x,para.beta_time,para.beta_enengy,para.Tu,para.tu_local,para.Eu_local,para.lamda,para.W,para.Ht,para.Pu,para.Sigma,para.r,para.Epsilon,para.beta);
-    [~,res_cra] = cra(x,para.Fs,para.Eta_user);
-    fx = lamda(Us(user)) * (fx - res_pra - res_cra);
+    [P,res_pra] = pra(x,para.beta_time,para.beta_enengy,para.Tu,para.tu_local,para.Eu_local,para.lamda,para.W,para.Ht,para.Pu,para.Sigma,para.r,para.Epsilon,para.beta);
+    [F,res_cra] = cra(x,para.Fs,para.Eta_user);
+    Jx = lamda(Us(user)) * (Jx - res_pra - res_cra);
 end
 
 function Kappa = getKappa(x,user,server,beta_time,beta_enengy,Tu,tu_local,Eu_local,W,Hr,Pur,Ps)

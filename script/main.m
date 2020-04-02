@@ -24,12 +24,22 @@ Pu = zeros(userNumber,1);    %用户最大输出功率矩阵
 for i = 1:userNumber
     Pu(i) = 10 + 40 * rand;
 end
-Pur = zeros(userNumber,1);   %用户接收功率矩阵
+Pur = ones(userNumber,1);   %用户接收功率矩阵
+Ps = ones(userNumber,1);    %服务器发射功率矩阵
 for i = 1:userNumber
     Pu(i) = 10 + 40 * rand;
 end
 Ht = rand(userNumber,serverNumber,sub_bandNumber);   %用户到服务器的增益矩阵
 Hr = rand(userNumber,serverNumber,sub_bandNumber);   %服务器到用户的增益矩阵
-F = zeros(userNumber,serverNumber);  %服务器计算资源分配矩阵
-P = zeros(userNumber,1); %用户发射功率分配矩阵
-[Ground,F,P] = optimal(U,Fu,S,Su,Tu,sub_band,B,W,Pur,Pu,Ht,Hr,userNumber,serverNumber,sub_bandNumber);
+lamda = rand(userNumber,1);
+Sigma = rand(userNumber,1);
+Epsilon = rand(userNumber,1);
+beta = rand(userNumber,1);
+r = rand(userNumber,1);
+beta_time = rand(userNumber,1);
+beta_enengy = ones(userNumber,1) - beta_time;
+[   J,...   %可行性度量
+    X,...   %频带和服务器分配矩阵
+    F,...   %服务器计算资源分配矩阵
+    P...    %用户发射功率分配矩阵
+    ] = optimize(Fu,Fs,Tu,W,Pur,Pu,Ps,Ht,Hr,lamda,Sigma,Epsilon,beta,r,beta_time,beta_enengy,userNumber,serverNumber,sub_bandNumber);

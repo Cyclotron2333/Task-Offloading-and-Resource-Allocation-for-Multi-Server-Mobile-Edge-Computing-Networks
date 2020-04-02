@@ -1,18 +1,19 @@
 function [F,T] = cra(G,Fs,Eta_user)
 %CRA computer resourses allocation 运算能力分配
     [userNumber,serverNumber,~] = size(G);
-    Eta_sum = sum(Eta_user);
     F = zeros(userNumber,serverNumber);
     T = 0;
-    for i = 1:serverNumber
-        [Us,n] = genUs(G,i);
+    for server = 1:serverNumber
+        [Us,n] = genUs(G,server);
+        EtaRoot_sum = 0;
+        for user = 1:n
+            EtaRoot_sum = EtaRoot_sum + Eta_user(Us(user))^(0.5);
+        end
         if n > 0
-            tempSum = 0;
-            for j = 1:n
-                F(Us(i)) = fs * Eta_user(i)^(0.5) / Eta_sum;
-                tempSum = tempSum + Eta_user(i)^(0.5);
+            for user = 1:n
+                F(Us(user),server) = Fs(server) * Eta_user(Us(user))^(0.5) / EtaRoot_sum;
             end
-            T = T + 1/Fs(i) * tempSum^2;
+            T = T + 1/Fs(server) * EtaRoot_sum^2;
         end
     end
 end

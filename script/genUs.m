@@ -1,15 +1,15 @@
-function [Us,num] = genUs(G,i)
+function [Us,num] = genUs(G,server)
 %GenUs 生成服务器对应的用户矩阵
-    [~,n,z] = size(G);
+    [m,~,z] = size(G);
     num = 0;
     Us = [];
-    for j = 1:n
-        for k = 1:z
-            if G(i,j,k) > 0
-                Us(num) = j;
+    for user = 1:m
+        for sub_band = 1:z
+            if G(user,server,sub_band) > 0
                 num = num + 1;
+                Us(num) = user;
                 break;
             end
         end
     end
-return
+end
