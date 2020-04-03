@@ -2,7 +2,6 @@ function [P,Q] = pra(G,beta_time,beta_enengy,Tu,tu_local,Eu_local,W,Ht,Pu,Sigma,
 %PRA uplink power resourses allocation 上行链路功率资源分配
     [userNumber,serverNumber,~] = size(G);
     P = sym('p',[1 userNumber]);   %用户发射功率分配矩阵
-    syms f t;
     flag_first = 1;
     for server = 1:serverNumber
        [Us,n] = genUs(G,server);
@@ -25,7 +24,13 @@ function [P,Q] = pra(G,beta_time,beta_enengy,Tu,tu_local,Eu_local,W,Ht,Pu,Sigma,
     end
     %F = convertToAcceptArray(matlabFunction(f));
     x0 = rand(1,userNumber);
-    l(P) = f;   %指定自变量再求梯度
+    if exist('f') == 0
+        Q = 0;
+        P = x0;
+        return;
+    else
+        l(P) = f;   %指定自变量再求梯度
+    end
     g = gradient(l);
     %G = convertToAcceptArray(matlabFunction(g));
     while 1

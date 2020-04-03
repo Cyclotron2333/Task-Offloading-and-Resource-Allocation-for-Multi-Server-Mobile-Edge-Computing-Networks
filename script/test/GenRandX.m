@@ -17,7 +17,7 @@ function pop = genRandSeed(userNumber, serverNumber,sub_bandNumber)
     pop = zeros(userNumber, serverNumber);
     for server=1:serverNumber
         if sub_bandNumber >= userNumber
-            pop(:,server) = randperm(sub_bandNumber+1,userNumber) - 1;    %为每个用户随机分配最多N个用户
+            pop(:,server) = randperm(sub_bandNumber+1,userNumber) - 1;    %为每个服务器随机分配最多N个用户
         else
             temp = randperm(sub_bandNumber+1,sub_bandNumber) - 1;
             member = randperm(userNumber,sub_bandNumber);
@@ -26,7 +26,7 @@ function pop = genRandSeed(userNumber, serverNumber,sub_bandNumber)
     end
     for user=1:userNumber
         number = 0;
-        for server=1:serverNumber   %统计改维度种不为零元素个数
+        for server=1:serverNumber   %统计该维度中不为零元素个数
             if pop(user,server) ~= 0
                 number = number + 1; 
             end

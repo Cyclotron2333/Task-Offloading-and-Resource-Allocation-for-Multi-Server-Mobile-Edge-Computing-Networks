@@ -18,10 +18,14 @@ function [J, X, P, F] = ta( ...
 
     x= genRandSeed(userNumber, serverNumber,sub_bandNumber);    %随机得到初始解
     
+    picture = zeros(2,1);
+    index = 1;
+    
     while(T>T_min)
         for I=1:k
             G = convert2G(x,userNumber, serverNumber,sub_bandNumber);
             [fx, P, F] = Fx(G,para);
+            J = fx;
             x_new = getneighbourhood(x,userNumber, serverNumber,sub_bandNumber);
             G_new = convert2G(x_new,userNumber, serverNumber,sub_bandNumber);
             [fx_new, P_new, F_new] = Fx(G_new,para);
@@ -33,6 +37,10 @@ function [J, X, P, F] = ta( ...
                 P = P_new;
                 F = F_new;
                 if fx_new < minimal_cost
+                    picture(index,1) = T;
+                    picture(index,2) = J;
+                    figure
+                    plot(picture(1),picture(2))
                     return;
                 end
             else
@@ -42,18 +50,27 @@ function [J, X, P, F] = ta( ...
                 end
             end
         end
+        picture(index,1) = T;
+        picture(index,2) = J;
+        index = index + 1;
         T=T*alpha;
     end
+    figure
+    plot(picture(1),picture(2))
 end
  
 function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
     user = unidrnd(userNumber);
-    server = unidrnd(serverNumber);
+    for server = 1:serverNumber
+        if x(user,server) ~= 0
+            break;  %找到用户所分配的服务器
+        end
+    end
     %两种扰动方式，交换或者赋值
-    if rand > 0.5   %更改某个用户的频带和服务器
+    if rand > 0.3   %更改某个用户的频带和服务器
         x(user,server) = 0;     %取消原来的分配
         band_flag = zeros(sub_bandNumber,2);    %频带使用情况的标记数组
-        if rand > 0.5   %更改用户的服务器
+        if rand > 0.6   %更改用户的服务器
             vary_server = unidrnd(serverNumber);    %目标服务器
             for i=1:userNumber  %使用一轮循环进行标记
                 if x(i,vary_server) ~= 0
@@ -144,20 +161,18 @@ function pop = genRandSeed(userNumber, serverNumber,sub_bandNumber)
     end
     for user=1:userNumber
         number = 0;
+        notzero = [];
         for server=1:serverNumber   %统计该维度中不为零元素个数
             if pop(user,server) ~= 0
-                number = number + 1; 
+                number = number + 1;
+                notzero(number) = server;
             end
         end
         if number > 1
             chosen = unidrnd(number);
-            index = 0;
-            for server=1:serverNumber
+            for server=1:number
                 if server~=chosen
-                    index = index +1;
-                    if index~=chosen
-                        pop(user,server) = 0;  %用户随机选择一个被分配的服务器（也有可能是自己）
-                    end
+                    pop(user,notzero(server)) = 0;
                 end
             end
         end

@@ -1,11 +1,24 @@
-function [J, X, P, F] = optimize(Fu,Fs,Tu,W,Pur,Pu,Ps,Ht,Hr,lamda,Sigma,Epsilon,beta,r,beta_time,beta_enengy,userNumber,serverNumber,sub_bandNumber)
+function [J, X, P, F] = optimize(Fu,Fs,Tu,W,Pur,Pu,Ps,Ht,Hr,...
+    lamda,Sigma,Epsilon,beta,r,beta_time,beta_enengy,...
+    k,...                       % 芯片能耗系数
+    userNumber,serverNumber,sub_bandNumber,...
+    T,...                       % 初始化温度值
+    T_min,...                   % 温度下界
+    alpha,...                   % 温度的下降率
+    n, ...                      % 邻域解空间的大小
+    minimal_cost...             % 最小目标值（函数值越小，则适应度越高）
+    )
+
 %optimize 负责执行优化操作
     tu_local = zeros(userNumber,1);
+    Eu_local = zeros(userNumber,1);
     for i = 1:userNumber    %初始化任务矩阵
+        Tu(i).data = 10 + 40 * rand;
+        Tu(i).circle = 40 * rand;
+        Tu(i).output = 4 * rand;
         tu_local(i) = Tu(i).circle/Fu(i);   %本地计算时间矩阵
+        Eu_local(i) = k * (Fu(i))^2 * Tu(i).circle;    %本地计算能耗矩阵
     end
-    k = rand;
-    Eu_local = k * (Fu.*Fu) * Tu.circle;    %本地计算能耗矩阵
     Eta_user = zeros(userNumber,1);
     for i=1:userNumber  %计算CRA所需的η
         Eta_user(i) = beta_time(i) * Tu(i).circle * lamda(i) / tu_local(i);
@@ -38,7 +51,7 @@ function [J, X, P, F] = optimize(Fu,Fs,Tu,W,Pur,Pu,Ps,Ht,Hr,lamda,Sigma,Epsilon,
     T,...                       % 初始化温度值
     T_min,...                   % 温度下界
     alpha,...                   % 温度的下降率
-    k, ...                      % 邻域解空间的大小
+    n, ...                      % 邻域解空间的大小
     minimal_cost,...            % 最小目标值（函数值越小，则适应度越高）
     para...                     % 所需参数
     );

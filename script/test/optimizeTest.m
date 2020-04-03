@@ -1,12 +1,12 @@
-function tests = taTest
+function tests = optimizeTest
     tests = functiontests(localfunctions);
 end
  
 %% testTa
-function testTa(~)
-    userNumber = 6;
-    serverNumber = 10;
-    sub_bandNumber = 8;
+function testOptimize(~)
+    userNumber = 20;
+    serverNumber = 2;
+    sub_bandNumber = 7;
     Fs = 10 + 40 * rand(serverNumber,1);  %服务器运算能力矩阵
     Fu = 10 + 40 * rand(userNumber,1);  %用户运算能力矩阵
     T0.data = [];   %任务由数据大小、运算所需时钟周期数、输出大小组成
@@ -41,39 +41,19 @@ function testTa(~)
     beta = rand;
     r = 0.001*rand;
     W = 20e6;   %系统总带宽
+    k = rand;
     
-    
-    para.beta_time = beta_time;
-    para.beta_enengy = beta_enengy;
-    para.Tu = Tu;
-    para.tu_local = tu_local;
-    para.Eu_local = Eu_local;
-    para.W = W;
-    para.Hr = Hr;
-    para.Ht = Ht;
-    para.Pur = Pur;
-    para.Ps = Ps;
-    para.lamda = lamda;
-    para.Pu = Pu;
-    para.Sigma = Sigma;
-    para.r = r;
-    para.Epsilon = Epsilon;
-    para.beta = beta;
-    para.Fs = Fs;
-    para.Eta_user = Eta_user;
-    
-   [J, X, P, F] = ta( ...
-    userNumber,...              % 用户个数
-    serverNumber,...            % 服务器个数
-    sub_bandNumber,...          % 子带个数
+    [J, X, P, F] = optimize(Fu,Fs,Tu,W,Pur,Pu,Ps,Ht,Hr,...
+    lamda,Sigma,Epsilon,beta,r,beta_time,beta_enengy,...
+    k,...                       % 芯片能耗系数
+    userNumber,serverNumber,sub_bandNumber,...
     1,...                       % 初始化温度值
-    0.1,...                     % 温度下界
-    0.95,...                    % 温度的下降率
+    0.1,...                   % 温度下界
+    0.9,...                   % 温度的下降率
     3, ...                      % 邻域解空间的大小
-    -30,...                     % 最小目标值（函数值越小，则适应度越高）
-    para...                     % 所需参数
+    -30 ...             % 最小目标值（函数值越小，则适应度越高）
     );
-    
+
     J
     X
     P
