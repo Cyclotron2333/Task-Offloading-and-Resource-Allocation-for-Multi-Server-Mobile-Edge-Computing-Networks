@@ -32,7 +32,7 @@ function testOptimize(~)
     end
     Ht = rand(userNumber,serverNumber,sub_bandNumber);   %用户到服务器的增益矩阵
     Hr = rand(userNumber,serverNumber,sub_bandNumber);
-    Pu = ones(userNumber,1);    %用户输出功率矩阵
+    Pu = ones(userNumber,1);    %用户最大输出功率矩阵
     Pur = ones(userNumber,1);   %用户接收功率矩阵
     Ps = ones(userNumber,1);    %服务器发射功率矩阵
     
@@ -43,7 +43,7 @@ function testOptimize(~)
     W = 20e6;   %系统总带宽
     k = rand;
     
-    [J, X, F] = optimize(Fu,Fs,Tu,W,Pur,Pu,Ps,Ht,Hr,...
+    [J, X, P, F] = optimize(Fu,Fs,Tu,W,Pur,Pu,Ps,Ht,Hr,...
     lamda,Sigma,Epsilon,beta,r,beta_time,beta_enengy,...
     k,...                       % 芯片能耗系数
     userNumber,serverNumber,sub_bandNumber,...
@@ -56,5 +56,6 @@ function testOptimize(~)
 
     J
     X
+    P
     F
 end

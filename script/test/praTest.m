@@ -1,12 +1,12 @@
-function tests = taTest
+function tests = praTest
     tests = functiontests(localfunctions);
 end
  
-%% testTa
-function testTa(~)
-    userNumber = 6;
-    serverNumber = 10;
-    sub_bandNumber = 8;
+%% testPra
+function testPra(~)
+    userNumber = 3;
+    serverNumber = 2;
+    sub_bandNumber = 2;
     Fs = 10 + 40 * rand(serverNumber,1);  %服务器运算能力矩阵
     Fu = 10 + 40 * rand(userNumber,1);  %用户运算能力矩阵
     T0.data = [];   %任务由数据大小、运算所需时钟周期数、输出大小组成
@@ -31,51 +31,17 @@ function testTa(~)
         Eta_user(i) = beta_time(i) * Tu(i).circle * lamda(i) / tu_local(i);
     end
     Ht = rand(userNumber,serverNumber,sub_bandNumber);   %用户到服务器的增益矩阵
-    Hr = rand(userNumber,serverNumber,sub_bandNumber);
     Pu = ones(userNumber,1);    %用户最大输出功率矩阵
-    Pur = ones(userNumber,1);   %用户接收功率矩阵
-    Ps = ones(userNumber,1);    %服务器发射功率矩阵
-    
+    X = GenRandX(userNumber, serverNumber,sub_bandNumber);
     Sigma = rand;
     Epsilon = 0.001*rand;
     beta = rand;
     r = 0.001*rand;
     W = 20e6;   %系统总带宽
-    
-    
-    para.beta_time = beta_time;
-    para.beta_enengy = beta_enengy;
-    para.Tu = Tu;
-    para.tu_local = tu_local;
-    para.Eu_local = Eu_local;
-    para.W = W;
-    para.Hr = Hr;
-    para.Ht = Ht;
-    para.Pur = Pur;
-    para.Ps = Ps;
-    para.lamda = lamda;
-    para.Pu = Pu;
-    para.Sigma = Sigma;
-    para.r = r;
-    para.Epsilon = Epsilon;
-    para.beta = beta;
-    para.Fs = Fs;
-    para.Eta_user = Eta_user;
-    
-   [J, X, P, F] = ta( ...
-    userNumber,...              % 用户个数
-    serverNumber,...            % 服务器个数
-    sub_bandNumber,...          % 子带个数
-    1,...                       % 初始化温度值
-    0.1,...                     % 温度下界
-    0.95,...                    % 温度的下降率
-    3, ...                      % 邻域解空间的大小
-    -30,...                     % 最小目标值（函数值越小，则适应度越高）
-    para...                     % 所需参数
-    );
-    
-    J
-    X
+    X(:,:,1) = [0,0;0,0;0,0];
+    X(:,:,2) = [0,0;0,1;0,0];
+    X(:,:,3) = [0,0;0,0;1,0];
+    [P,Q] = pra(X,beta_time,beta_enengy,Tu,tu_local,Eu_local,W,Ht,Pu,Sigma,r,Epsilon,beta,lamda);
     P
-    F
+    Q
 end
