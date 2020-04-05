@@ -32,7 +32,7 @@ function testTa(~)
     end
     Ht = rand(userNumber,serverNumber,sub_bandNumber);   %用户到服务器的增益矩阵
     Hr = rand(userNumber,serverNumber,sub_bandNumber);
-    Pu = ones(userNumber,1);    %用户最大输出功率矩阵
+    Pu = ones(userNumber,1);    %用户输出功率矩阵
     Pur = ones(userNumber,1);   %用户接收功率矩阵
     Ps = ones(userNumber,1);    %服务器发射功率矩阵
     
@@ -62,7 +62,7 @@ function testTa(~)
     para.Fs = Fs;
     para.Eta_user = Eta_user;
     
-   [J, X, P, F] = ta( ...
+   [J, X, F] = ta( ...
     userNumber,...              % 用户个数
     serverNumber,...            % 服务器个数
     sub_bandNumber,...          % 子带个数
@@ -76,6 +76,5 @@ function testTa(~)
     
     J
     X
-    P
     F
 end
