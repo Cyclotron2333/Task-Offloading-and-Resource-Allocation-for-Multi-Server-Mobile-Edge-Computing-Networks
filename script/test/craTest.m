@@ -15,8 +15,8 @@ function testCra(~)
     userNumber = 3;
     serverNumber = 2;
     sub_bandNumber = 2;
-    Fs = 10 + 40 * rand(userNumber,1);  %服务器运算能力矩阵
-    Fu = 10 + 40 * rand(serverNumber,1);  %用户运算能力矩阵
+    Fs = 10 + 40 * rand(serverNumber,1);  %服务器运算能力矩阵
+    Fu = 10 + 40 * rand(userNumber,1);  %用户运算能力矩阵
     T0.data = [];   %任务由数据大小、运算所需时钟周期数、输出大小组成
     T0.circle = [];
     T0.output = [];

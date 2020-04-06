@@ -1,5 +1,5 @@
-function [J, X, F] = optimize(Fu,Fs,Tu,W,Pur,Pu,Ps,Ht,Hr,...
-    lamda,Sigma,Epsilon,beta,r,beta_time,beta_enengy,...
+function [J, X, F] = optimize(Fu,Fs,Tu,W,Pu,H,...
+    lamda,Sigma_square,beta_time,beta_enengy,...
     k,...                       % 芯片能耗系数
     userNumber,serverNumber,sub_bandNumber,...
     T,...                       % 初始化温度值
@@ -13,9 +13,6 @@ function [J, X, F] = optimize(Fu,Fs,Tu,W,Pur,Pu,Ps,Ht,Hr,...
     tu_local = zeros(userNumber,1);
     Eu_local = zeros(userNumber,1);
     for i = 1:userNumber    %初始化任务矩阵
-        Tu(i).data = 10 + 40 * rand;
-        Tu(i).circle = 40 * rand;
-        Tu(i).output = 4 * rand;
         tu_local(i) = Tu(i).circle/Fu(i);   %本地计算时间矩阵
         Eu_local(i) = k * (Fu(i))^2 * Tu(i).circle;    %本地计算能耗矩阵
     end
@@ -31,16 +28,10 @@ function [J, X, F] = optimize(Fu,Fs,Tu,W,Pur,Pu,Ps,Ht,Hr,...
     para.tu_local = tu_local;
     para.Eu_local = Eu_local;
     para.W = W;
-    para.Hr = Hr;
-    para.Ht = Ht;
-    para.Pur = Pur;
-    para.Ps = Ps;
+    para.Ht = H;
     para.lamda = lamda;
     para.Pu = Pu;
-    para.Sigma = Sigma;
-    para.r = r;
-    para.Epsilon = Epsilon;
-    para.beta = beta;
+    para.Sigma_square = Sigma_square;
     para.Fs = Fs;
     para.Eta_user = Eta_user;
     

@@ -7,7 +7,8 @@ function [Us,num] = genUs(G,server)
         for sub_band = 1:z
             if G(user,server,sub_band) > 0
                 num = num + 1;
-                Us(num) = user;
+                Us(num,1) = user;
+                Us(num,2) = sub_band;
                 break;
             end
         end

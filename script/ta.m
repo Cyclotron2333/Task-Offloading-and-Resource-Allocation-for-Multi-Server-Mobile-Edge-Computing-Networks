@@ -28,16 +28,19 @@ function [J, X, F] = ta( ...
             x_new = getneighbourhood(x,userNumber, serverNumber,sub_bandNumber);
             [fx_new, F_new] = Fx(x_new,para);
             delta = fx_new-fx;
-            if (delta<0)
+            if (delta>0)
                 x = x_new;
                 J = fx_new;
                 X = x;
                 F = F_new;
-                if fx_new < minimal_cost
+                if fx_new > minimal_cost
                     picture(index,1) = T;
                     picture(index,2) = J;
                     figure
-                    plot(picture(:,1),picture(:,2))
+                    title('模拟退火算法进行任务调度优化');
+                    xlabel('温度T');
+                    ylabel('目标函数值');
+                    plot(picture(:,1),picture(:,2),'b-.')
                     set(gca,'XDir','reverse');      %对X方向反转
                     return;
                 end
@@ -54,7 +57,10 @@ function [J, X, F] = ta( ...
         T=T*alpha;
     end
     figure
-    plot(picture(:,1),picture(:,2))
+    title('模拟退火算法进行任务调度优化');
+    xlabel('温度T');
+    ylabel('目标函数值');
+    plot(picture(:,1),picture(:,2),'b-.');
     set(gca,'XDir','reverse');      %对X方向反转
 end
  
@@ -171,7 +177,8 @@ function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
 end
  
 function p = getProbability(delta,t)
-    p=exp(-delta/t);
+    k = 1e-3;
+    p=exp(delta/(k*t));
 end
 
 function x = genRandX(userNumber, serverNumber,sub_bandNumber)
@@ -225,28 +232,35 @@ end
 function [Jx, F] = Fx(x,para)
     [F,res_cra] = cra(x,para.Fs,para.Eta_user);
     Jx = 0;
-    [~,serverNumber,~] = size(x);
+    [~,serverNumber,sub_bandNumber] = size(x);
     for server = 1:serverNumber
-       [Us,n] = genUs(x,server);
+        [Us,n] = genUs(x,server);
+        MultiplexingNumber = zeros(sub_bandNumber);
+        for band = 1:sub_bandNumber
+            MultiplexingNumber(band) = max(x(:,server,band));
+        end
         if n > 0
             for user = 1:n
-                Kappa = getKappa(x,user,server,para.beta_time,para.beta_enengy,para.Sigma,para.Tu,para.tu_local,para.Eu_local,para.W,para.Hr,para.Pur,para.Ps);
-                Pi = getPi(x,user,server,para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma,para.W);
-                Jx = Jx + para.lamda(Us(user)) * (1 - Kappa - Pi);
+                Pi = getPi(x,user,server,para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma_square,para.W);
+                if MultiplexingNumber(Us(user,2)) > 0
+                    Jx = Jx + para.lamda(Us(user,1)) * (1 - ( MultiplexingNumber(Us(user,2)) - x(Us(user,1),server,Us(user,2)) + 1 ) * Pi);
+                else
+                    Jx = Jx + para.lamda(Us(user,1)) * (1 - Pi);
+                end
             end
         end
     end
     Jx = (Jx - res_cra);
 end
 
-function Pi = getPi(x,user,server,beta_time,beta_enengy,tu_local,Eu_local,Tu,Pu,Ht,Sigma,W)
+function Pi = getPi(x,user,server,beta_time,beta_enengy,tu_local,Eu_local,Tu,Pu,Ht,Sigma_square,W)
 %GetPi 计算Pi_us
     Pi = beta_time(user)/tu_local(user) + beta_enengy(user)/Eu_local(user)*Pu(user);
-    Gamma_us = getGamma(x,Pu,Sigma,Ht,user,server);
+    Gamma_us = getGamma(x,Pu,Sigma_square,Ht,user,server);
     Pi = Pi * Tu(user).data / W / log2(1 + Gamma_us) ;
 end
 
-function Gamma = getGamma(G,Pu,Sigma,Ht,user,server)
+function Gamma = getGamma(G,Pu,Sigma_square,H,user,server)
 %GetGamma 计算Gamma_us
     Gamma = 0;
     [~,serverNumber,sub_bandNumber] = size(G);
@@ -256,37 +270,12 @@ function Gamma = getGamma(G,Pu,Sigma,Ht,user,server)
             if i ~= server
                 [Us,n] = genUs(G,i);
                 for k = 1:n
-                    denominator = denominator + G(Us(k),i,sub_band) * Pu(Us(k)) * Ht(Us(k),i,sub_band);
+                    denominator = denominator + G(Us(k,1),i,sub_band) * Pu(Us(k,1)) * H(Us(k,1),i,sub_band);
                 end
             end
         end
-        denominator = denominator + Sigma^2;
-        Gamma = Pu(user)*Ht(user,server,sub_band)/denominator;
+        denominator = denominator + Sigma_square;
+        Gamma = Pu(user)*H(user,server,sub_band)/denominator;
     end
 end
 
-function Kappa = getKappa(x,user,server,beta_time,beta_enengy,Sigma,Tu,tu_local,Eu_local,W,Hr,Pur,Ps)
-%GetKappa 计算Kappa_us
-    Kappa = beta_time(user)/tu_local(user) + beta_enengy(user)/Eu_local(user)*Pur(user);
-    Xi_us = getXi(x,Ps,Sigma,Hr,user,server);
-    Kappa = Kappa * Tu(user).output/W /log2(1 + Xi_us) ;
-end
-
-function Xi = getXi(G,Ps,Sigma,Hr,user,server)
-%GetXi 计算Xi_us
-    Xi = 0;
-    [~,serverNumber,sub_bandNumber] = size(G);
-    for sub_band = 1:sub_bandNumber
-        denominator = 0;    %计算分母
-        for i = 1:serverNumber
-            if i ~= server
-                [Us,userNumber] = genUs(G,i);
-                for k = 1:userNumber
-                    denominator = denominator + G(Us(k),i,sub_band) * Ps(Us(k)) * Hr(Us(k),i,sub_band);
-                end
-            end
-        end
-        denominator = denominator + Sigma^2;    %分母计算完成
-        Xi = Ps(user)*Hr(user,server,sub_band)/denominator;
-    end
-end

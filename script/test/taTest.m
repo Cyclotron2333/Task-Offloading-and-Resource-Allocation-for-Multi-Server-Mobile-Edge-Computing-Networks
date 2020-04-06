@@ -4,9 +4,9 @@ end
  
 %% testTa
 function testTa(~)
-    userNumber = 6;
-    serverNumber = 10;
-    sub_bandNumber = 8;
+    userNumber = 3;
+    serverNumber = 2;
+    sub_bandNumber = 1;
     Fs = 10 + 40 * rand(serverNumber,1);  %服务器运算能力矩阵
     Fu = 10 + 40 * rand(userNumber,1);  %用户运算能力矩阵
     T0.data = [];   %任务由数据大小、运算所需时钟周期数、输出大小组成
@@ -70,7 +70,7 @@ function testTa(~)
     0.1,...                     % 温度下界
     0.95,...                    % 温度的下降率
     3, ...                      % 邻域解空间的大小
-    -30,...                     % 最小目标值（函数值越小，则适应度越高）
+    40,...                     % 最小目标值（函数值越小，则适应度越高）
     para...                     % 所需参数
     );
     
