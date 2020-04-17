@@ -6,7 +6,7 @@ end
 function testOptimize(~)
     userNumber = 50;
     serverNumber = 10;
-    sub_bandNumber = 5;
+    sub_bandNumber = 3;
     Fs = 20e9 * ones(serverNumber,1);   %服务器运算能力矩阵
     Fu = 1e9 * ones(userNumber,1);  %用户运算能力矩阵
     T0.data = [];   %任务由数据大小、运算所需时钟周期数、输出大小组成
@@ -14,7 +14,7 @@ function testOptimize(~)
     Tu = repmat(T0,userNumber);
     for i = 1:userNumber    %初始化任务矩阵
         Tu(i).data = 420 * 1024 * 8;
-        Tu(i).circle = 50e6;
+        Tu(i).circle = 1000e6;
     end
     lamda = ones(userNumber,1);
     beta_time = 0.2 * ones(userNumber,1);
@@ -30,10 +30,10 @@ function testOptimize(~)
     lamda,Sigma_square,beta_time,beta_enengy,...
     k,...                           % 芯片能耗系数
     userNumber,serverNumber,sub_bandNumber,...
-    2000,...                        % 初始化温度值
+    1500,...                        % 初始化温度值
     1e-8,...                        % 温度下界
     0.95,...                        % 温度的下降率
-    10, ...                         % 邻域解空间的大小
+    5, ...                          % 邻域解空间的大小
     300 ...                         % 最小目标值（函数值越小，则适应度越高）
     );
 

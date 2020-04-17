@@ -79,98 +79,50 @@ function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
         end
     end
     %两种扰动方式，交换或者赋值
-    if rand > 0.5   %50%的概率更改（即和原来不一样）某个用户的频带和服务器或优先级
+    if rand > 0.5   %50%的概率更改（即和原来不一样）某个用户的频带或服务器
         if rand > 0.5   %25%的概率更改用户的服务器（选择offload）
-            origin = x(user,server,band);     %取消原来的分配
-            for j=1:userNumber
-                if x(j,server,band) > origin
-                    x(j,server,band) = x(j,server,band) - 1;
-                end
-            end
             x(user,server,band) = 0;
             vary_server = unidrnd(serverNumber);    %目标服务器
             vary_band = randi(sub_bandNumber);    %目标频带
-            M = max(x(:,vary_server,vary_band));    %查询频带占用数
-            x(user,vary_server,vary_band) = M+1;
-        else 
-            if rand > 0.6 %15%的概率更改用户的频带（选择offload）
-                origin = x(user,server,band);     %取消原来的分配
-                for j=1:userNumber
-                    if x(j,server,band) > origin
-                        x(j,server,band) = x(j,server,band) - 1;
-                    end
-                end
+            x(user,vary_server,vary_band) = 1;
+        else    %25%的概率更改用户的频带（选择offload）
+            if sub_bandNumber ~= 1
                 x(user,server,band) = 0;
-                vary_band = unidrnd(sub_bandNumber+1)-1;    %目标频带
+                vary_band = unidrnd(sub_bandNumber);    %目标频带
                 while vary_band == band
-                    vary_band = unidrnd(sub_bandNumber+1)-1;
+                    vary_band = unidrnd(sub_bandNumber);
                 end
-                if vary_band ~= 0
-                    M = max(x(:,server,vary_band));    %查询频带占用数
-                    x(user,server,vary_band) = M+1;
-                end
-            else    %10%的概率更改用户在频带中的使用优先级
-                M = max(x(:,server,band));    %查询频带占用数
-                if M ~= 0
-                    vary_rank = unidrnd(M+1)-1;     %目标优先级
-                    if x(user,server,band) == 0
-                        M = M + 1;
-                    end
-                    while vary_rank == x(user,server,band)
-                        vary_rank = unidrnd(M+1)-1; 
-                    end
-                    if vary_rank ~= 0
-                        found = 0;
-                        for user_other=1:userNumber
-                            if x(user_other,server,band) == vary_rank
-                                found = 1;
-                                break;  %找到优先级为目标优先级的用户
-                            end
-                        end
-                        if found == 1
-                            x(user_other,server,band) = x(user,server,band);
-                        end
-                    else
-                        for j=1:userNumber
-                            if x(j,server,band) > x(user,server,band)
-                                x(j,server,band) = x(j,server,band) - 1;
-                            end
-                        end
-                    end
-                    x(user,server,band) = vary_rank;
-                else
-                    x(user,server,band) = 1;
-                end
+                x(user,server,vary_band) = 1;
             end
         end
     else 
-        if rand > 0.4  %20%的概率交换两个用户的服务器和频带
-            user_other = unidrnd(userNumber);    %指定另一个用户
-            while user_other == user
-                user_other = unidrnd(userNumber);
-            end
-            flag_found = 0;
-            for server_other = 1:serverNumber
-                for band_other=1:sub_bandNumber
-                    if x(user_other,server_other,band_other) ~= 0
-                        flag_found = 1;
-                        break;  %找到另一个用户所分配的服务器和频带
+        if rand > 0.6  %20%的概率交换两个用户的服务器和频带
+            if userNumber ~= 1
+                user_other = unidrnd(userNumber);    %指定另一个用户
+                while user_other == user
+                    user_other = unidrnd(userNumber);
+                end
+                flag_found = 0;
+                for server_other = 1:serverNumber
+                    for band_other=1:sub_bandNumber
+                        if x(user_other,server_other,band_other) ~= 0
+                            flag_found = 1;
+                            break;  %找到另一个用户所分配的服务器和频带
+                        end
+                    end
+                    if flag_found == 1
+                        break;
                     end
                 end
-                if flag_found == 1
-                    break;
-                end
-            end
-            xRank =  x(user,server,band);
-            xRank_other =  x(user_other,server_other,band_other);
-            x(user,server,band) = 0;
-            x(user_other,server_other,band_other) = 0;
-            x(user,server_other,band_other) = xRank_other;  %更改频带和服务器
-            x(user_other,server,band) = xRank;
-        else
-            if rand > 0.333   %10%的概率交换两个用户的服务器和频带
+                xValue =  x(user,server,band);
+                xValue_other =  x(user_other,server_other,band_other);
                 x(user,server,band) = 0;
+                x(user_other,server_other,band_other) = 0;
+                x(user,server_other,band_other) = xValue_other;  %更改频带和服务器
+                x(user_other,server,band) = xValue;
             end
+        else    %30%的概率改变该用户的决策
+            x(user,server,band) = 1 - x(user,server,band);
         end
     end
     res = x;
@@ -185,13 +137,10 @@ function x = genRandX(userNumber, serverNumber,sub_bandNumber)
 %GenRandX  将种子矩阵转化为X矩阵
     seed = genRandSeed(userNumber, serverNumber,sub_bandNumber);
     x = zeros(userNumber, serverNumber,sub_bandNumber);
-    sub_band = ones(sub_bandNumber,serverNumber);
     for user=1:userNumber
         for server=1:serverNumber
-            band = seed(user, server);
-            if band ~= 0
-                x(user, server,band) = sub_band(band,server);
-                sub_band(band,server) = sub_band(band,server) + 1;
+            if seed(user, server) ~= 0
+                x(user, server, seed(user, server)) = 1;
             end
         end
     end
@@ -235,47 +184,41 @@ function [Jx, F] = Fx(x,para)
     [~,serverNumber,sub_bandNumber] = size(x);
     for server = 1:serverNumber
         [Us,n] = genUs(x,server);
-        MultiplexingNumber = zeros(sub_bandNumber);
+        multiplexingNumber = zeros(sub_bandNumber,1);
         for band = 1:sub_bandNumber
-            MultiplexingNumber(band) = max(x(:,server,band));
+            multiplexingNumber(band) = sum(x(:,server,band));
         end
         if n > 0
             for user = 1:n
-                Pi = getPi(x,user,server,para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma_square,para.W);
-                if MultiplexingNumber(Us(user,2)) > 0
-                    Jx = Jx + para.lamda(Us(user,1)) * (1 - ( MultiplexingNumber(Us(user,2)) - x(Us(user,1),server,Us(user,2)) + 1 ) * Pi);
-                else
-                    Jx = Jx + para.lamda(Us(user,1)) * (1 - Pi);
-                end
+                Pi = getPi(x,user,server,Us(user,2),sub_bandNumber,multiplexingNumber(Us(user,2)),para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma_square,para.W);
+                Jx = Jx + para.lamda(Us(user,1)) * (1 - Pi);
             end
         end
     end
     Jx = (Jx - res_cra);
 end
 
-function Pi = getPi(x,user,server,beta_time,beta_enengy,tu_local,Eu_local,Tu,Pu,Ht,Sigma_square,W)
+function Pi = getPi(x,user,server,band,sub_bandNumber,multiplexingNumber,beta_time,beta_enengy,tu_local,Eu_local,Tu,Pu,Ht,Sigma_square,W)
 %GetPi 计算Pi_us
+    B = W / sub_bandNumber;
     Pi = beta_time(user)/tu_local(user) + beta_enengy(user)/Eu_local(user)*Pu(user);
-    Gamma_us = getGamma(x,Pu,Sigma_square,Ht,user,server);
-    Pi = Pi * Tu(user).data / W / log2(1 + Gamma_us) ;
+    Gamma_us = getGamma(x,Pu,Sigma_square,Ht,user,server,band);
+    Pi = Pi * Tu(user).data / B / log2(1 + Gamma_us) / multiplexingNumber;
 end
 
-function Gamma = getGamma(G,Pu,Sigma_square,H,user,server)
+function Gamma = getGamma(G,Pu,Sigma_square,H,user,server,band)
 %GetGamma 计算Gamma_us
-    Gamma = 0;
-    [~,serverNumber,sub_bandNumber] = size(G);
-    for sub_band = 1:sub_bandNumber
-        denominator = 0;
-        for i = 1:serverNumber
-            if i ~= server
-                [Us,n] = genUs(G,i);
-                for k = 1:n
-                    denominator = denominator + G(Us(k,1),i,sub_band) * Pu(Us(k,1)) * H(Us(k,1),i,sub_band);
-                end
+    [~,serverNumber,~] = size(G);
+    denominator = 0;
+    for i = 1:serverNumber
+        if i ~= server
+            [Us,n] = genUs(G,i);
+            for k = 1:n
+                denominator = denominator + G(Us(k,1),i,band) * Pu(Us(k,1)) * H(Us(k,1),i,band);
             end
         end
-        denominator = denominator + Sigma_square;
-        Gamma = Pu(user)*H(user,server,sub_band)/denominator;
     end
+    denominator = denominator + Sigma_square;
+    Gamma = Pu(user)*H(user,server,band)/denominator;
 end
 
