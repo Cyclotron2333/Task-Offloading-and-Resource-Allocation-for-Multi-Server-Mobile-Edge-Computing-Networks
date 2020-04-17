@@ -68,7 +68,7 @@ function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
     user = unidrnd(userNumber);     %指定要扰动的用户对象
     flag_found = 0;
     for server = 1:serverNumber
-        for band=1:sub_bandNumber
+        for band = 1:sub_bandNumber
             if x(user,server,band) ~= 0
                 flag_found = 1;
                 break;  %找到用户所分配的服务器和频带
@@ -79,8 +79,9 @@ function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
         end
     end
     %两种扰动方式，交换或者赋值
-    if rand > 0.5   %50%的概率更改（即和原来不一样）某个用户的频带或服务器
-        if rand > 0.5   %25%的概率更改用户的服务器（选择offload）
+    chosen = rand;
+    if chosen > 0.3   %50%的概率更改（即和原来不一样）某个用户的频带或服务器
+        if chosen > 0.75   %45%的概率更改用户的服务器（选择offload）
             x(user,server,band) = 0;
             vary_server = unidrnd(serverNumber);    %目标服务器
             vary_band = randi(sub_bandNumber);    %目标频带
@@ -96,7 +97,7 @@ function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
             end
         end
     else 
-        if rand > 0.6  %20%的概率交换两个用户的服务器和频带
+        if chosen > 0.2  %10%的概率交换两个用户的服务器和频带
             if userNumber ~= 1
                 user_other = unidrnd(userNumber);    %指定另一个用户
                 while user_other == user
@@ -121,7 +122,7 @@ function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
                 x(user,server_other,band_other) = xValue_other;  %更改频带和服务器
                 x(user_other,server,band) = xValue;
             end
-        else    %30%的概率改变该用户的决策
+        else    %20%的概率改变该用户的决策
             x(user,server,band) = 1 - x(user,server,band);
         end
     end

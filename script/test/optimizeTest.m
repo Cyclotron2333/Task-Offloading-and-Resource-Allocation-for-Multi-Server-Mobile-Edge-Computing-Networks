@@ -5,7 +5,7 @@ end
 %% testTa
 function testOptimize(~)
     userNumber = 50;
-    serverNumber = 10;
+    serverNumber = 9;
     sub_bandNumber = 3;
     Fs = 20e9 * ones(serverNumber,1);   %服务器运算能力矩阵
     Fu = 1e9 * ones(userNumber,1);  %用户运算能力矩阵
@@ -19,13 +19,15 @@ function testOptimize(~)
     lamda = ones(userNumber,1);
     beta_time = 0.2 * ones(userNumber,1);
     beta_enengy = ones(userNumber,1) - beta_time;
-    H = 140.7 * ones(userNumber,serverNumber,sub_bandNumber) + 36.7*log10(0.112*rand(userNumber,serverNumber,sub_bandNumber));   %用户到服务器的增益矩阵
+    
+    H = genGain(userNumber,serverNumber,sub_bandNumber,20);   %用户到服务器的增益矩阵
     Pu = 0.001 * 10^2 * ones(userNumber,1);    %用户输出功率矩阵
     
     Sigma_square = 0.001 * 10^(-100/10);
     W = 20e6;   %系统总带宽
     k = 5e-27;
     
+    tic;
     [J, X, F] = optimize(Fu,Fs,Tu,W,Pu,H,...
     lamda,Sigma_square,beta_time,beta_enengy,...
     k,...                           % 芯片能耗系数
@@ -36,8 +38,9 @@ function testOptimize(~)
     5, ...                          % 邻域解空间的大小
     300 ...                         % 最小目标值（函数值越小，则适应度越高）
     );
-
-    J
-    X
-    F
+    toc;
+    
+    %J
+    %X
+    %F
 end
