@@ -5,8 +5,7 @@ function [J, X, F] = optimize(Fu,Fs,Tu,W,Pu,H,...
     T,...                       % 初始化温度值
     T_min,...                   % 温度下界
     alpha,...                   % 温度的下降率
-    n, ...                      % 邻域解空间的大小
-    minimal_cost...             % 最小目标值（函数值越小，则适应度越高）
+    n ...                      % 邻域解空间的大小
     )
 
 %optimize 负责执行优化操作
@@ -43,8 +42,7 @@ function [J, X, F] = optimize(Fu,Fs,Tu,W,Pu,H,...
     T_min,...                   % 温度下界
     alpha,...                   % 温度的下降率
     n, ...                      % 邻域解空间的大小
-    minimal_cost,...            % 最小目标值（函数值越小，则适应度越高）
-    para...                     % 所需参数
+    para...                    % 所需参数
     );
 
 end

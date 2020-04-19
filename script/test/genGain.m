@@ -6,7 +6,7 @@ function H = genGain(userNumber,serverNumber,sub_bandNumber,gapOfServer)
         for j = 1:serverNumber
             dis = ((userMap(i,1)-serverMap(j,1))^2+(userMap(i,2)-serverMap(j,2))^2)^0.5;
             gain_DB = 140.7 + 36.7*log10(dis/1000);
-            H(i,j,:) = 10^(gain_DB/10) * ones(1,sub_bandNumber);
+            H(i,j,:) = 1/(10^(gain_DB/10)) * ones(1,sub_bandNumber);
         end
     end
     plot(serverMap(:,1),serverMap(:,2),'*r')

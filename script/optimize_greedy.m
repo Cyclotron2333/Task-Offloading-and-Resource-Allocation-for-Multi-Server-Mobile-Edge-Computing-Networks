@@ -1,12 +1,52 @@
-function [max_objective, X, F] = ta( ...
+function [J, X, F] = optimize_greedy(Fu,Fs,Tu,W,Pu,H,...
+    lamda,Sigma_square,beta_time,beta_enengy,...
+    k,...                       % 芯片能耗系数
+    userNumber,serverNumber,sub_bandNumber,...
+    maxtime ...                 % 最大迭代次数
+    )
+
+%optimize 负责执行优化操作
+    tu_local = zeros(userNumber,1);
+    Eu_local = zeros(userNumber,1);
+    for i = 1:userNumber    %初始化任务矩阵
+        tu_local(i) = Tu(i).circle/Fu(i);   %本地计算时间矩阵
+        Eu_local(i) = k * (Fu(i))^2 * Tu(i).circle;    %本地计算能耗矩阵
+    end
+    Eta_user = zeros(userNumber,1);
+    for i=1:userNumber  %计算CRA所需的η
+        Eta_user(i) = beta_time(i) * Tu(i).circle * lamda(i) / tu_local(i);
+    end
+    
+    %封装参数
+    para.beta_time = beta_time;
+    para.beta_enengy = beta_enengy;
+    para.Tu = Tu;
+    para.tu_local = tu_local;
+    para.Eu_local = Eu_local;
+    para.W = W;
+    para.Ht = H;
+    para.lamda = lamda;
+    para.Pu = Pu;
+    para.Sigma_square = Sigma_square;
+    para.Fs = Fs;
+    para.Eta_user = Eta_user;
+    
+   [J, X, F] = ta( ...
     userNumber,...              % 用户个数
     serverNumber,...            % 服务器个数
     sub_bandNumber,...          % 子带个数
-    T,...                       % 初始化温度值
-    T_min,...                   % 温度下界
-    alpha,...                   % 温度的下降率
-    k, ...                      % 邻域解空间的大小
-    para...                    % 所需参数
+    para,...                    % 所需参数
+    maxtime ...                 % 最大迭代次数
+    );
+
+end
+
+function [J, X, F] = ta( ...
+    userNumber,...              % 用户个数
+    serverNumber,...            % 服务器个数
+    sub_bandNumber,...          % 子带个数
+    para,...                    % 所需参数
+    maxtime ...                 % 最大迭代次数
 )
 %TA Task allocation,任务分配算法，采用模拟退火算法
 
@@ -15,47 +55,33 @@ function [max_objective, X, F] = ta( ...
     %alpha=0.98;     
     %k=1000;         
 
-    x_old= genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %得到初始解
+    x= genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %随机得到初始解
+    [fx, F] = Fx(x,para);
+    J = fx;
     
     picture = zeros(2,1);
     iterations = 1;
     
-    max_objective = 0;
-    
-    [fx_old, F] = Fx(x_old,para);
-    
-    while(T>T_min)
-        for I=1:k
-            x_new = getneighbourhood(x_old,userNumber, serverNumber,sub_bandNumber);
-            [fx_new, F_new] = Fx(x_new,para);
-            delta = fx_new-fx_old;
-            if (delta>0)
-                x_old = x_new;
-                fx_old = fx_new;
-                if fx_new > max_objective
-                    max_objective = fx_new;
-                    X = x_new;
-                    F = F_new;
-                end
-            else
-                pro=getProbability(delta,T);
-                if(pro>rand)
-                    x_old=x_new;
-                    fx_old = fx_new;
-                end
-            end
+    while(iterations < maxtime)
+        x_new = getneighbourhood(x,userNumber, serverNumber,sub_bandNumber);
+        [fx_new, F_new] = Fx(x_new,para);
+        delta = fx_new-fx;
+        if (delta>0)
+            x = x_new;
+            fx = fx_new;
+            J = fx_new;
+            X = x;
+            F = F_new;
         end
-        picture(iterations,1) = T;
-        picture(iterations,2) = fx_old;
+        picture(iterations,1) = iterations;
+        picture(iterations,2) = J;
         iterations = iterations + 1;
-        T=T*alpha;
     end
-    figure
-    plot(picture(:,1),picture(:,2),'b-.');
-    set(gca,'XDir','reverse');      %对X方向反转
-    title('模拟退火算法进行任务调度优化');
-    xlabel('温度T');
-    ylabel('目标函数值');
+%     figure
+%     plot(picture(:,1),picture(:,2),'b-.');
+%     title('贪心算法进行任务调度优化');
+%     xlabel('迭代次数');
+%     ylabel('目标函数值');
 end
  
 function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
@@ -121,10 +147,6 @@ function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
         end
     end
     res = x;
-end
- 
-function p = getProbability(delta,t)
-    p = exp(delta/t);
 end
 
 function seed = genOriginX(userNumber, serverNumber,sub_bandNumber,para)
@@ -195,3 +217,4 @@ function Gamma = getGamma(G,Pu,Sigma_square,H,user,server,band)
     denominator = denominator + Sigma_square;
     Gamma = Pu(user)*H(user,server,band)/denominator;
 end
+
