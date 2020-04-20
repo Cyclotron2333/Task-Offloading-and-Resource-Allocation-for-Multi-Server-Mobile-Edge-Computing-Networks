@@ -5,8 +5,8 @@ end
 %% testTa
 function testOptimize(~)
     userNumber = 50;
-    serverNumber = 9;
-    sub_bandNumber = 3;
+    serverNumber = 25;
+    sub_bandNumber = 2;
     Fs = 20e9 * ones(serverNumber,1);   %服务器运算能力矩阵
     Fu = 1e9 * ones(userNumber,1);  %用户运算能力矩阵
     T0.data = [];   %任务由数据大小、运算所需时钟周期数、输出大小组成
@@ -20,7 +20,8 @@ function testOptimize(~)
     beta_time = 0.2 * ones(userNumber,1);
     beta_enengy = ones(userNumber,1) - beta_time;
     
-    H = genGain(userNumber,serverNumber,sub_bandNumber,20);   %用户到服务器的增益矩阵
+    gapOfServer = 112;
+    H = genGain(userNumber,serverNumber,sub_bandNumber,gapOfServer);   %用户到服务器的增益矩阵
     Pu = 0.001 * 10^2 * ones(userNumber,1);    %用户输出功率矩阵
     
     Sigma_square = 0.001 * 10^(-100/10);
@@ -49,7 +50,7 @@ function testOptimize(~)
         lamda,Sigma_square,beta_time,beta_enengy,...
         k,...                           % 芯片能耗系数
         userNumber,serverNumber,sub_bandNumber,...
-        userNumber/50,...               % 初始化温度值
+        7.5,...                         % 初始化温度值
         10e-9,...                       % 温度下界
         0.95,...                        % 温度的下降率
         5 ...                           % 邻域解空间的大小
@@ -58,31 +59,28 @@ function testOptimize(~)
         option1_objective(time) = J1;
     end
     
-%     for time = 1: test_time
-%         tic;
-%         [J2, ~, ~] = optimize_greedy(Fu,Fs,Tu,W,Pu,H,...
-%         lamda,Sigma_square,beta_time,beta_enengy,...
-%         k,...                           % 芯片能耗系数
-%         userNumber,serverNumber,sub_bandNumber,...
-%         2320 ...                          % 最大迭代次数
-%         );
-%         option2_time (time) = toc;
-%         option2_objective(time) = J2;
-%     end
-    
     for time = 1: test_time
         tic;
-        [J2, ~, ~] = ta_model3(Fu,Fs,Tu,W,Pu,H,...
+        [J2, ~, ~] = optimize_greedy(Fu,Fs,Tu,W,Pu,H,...
         lamda,Sigma_square,beta_time,beta_enengy,...
         k,...                           % 芯片能耗系数
         userNumber,serverNumber,sub_bandNumber,...
-        20,...                         % 初始化温度值
-        1e-9,...                        % 温度下界
-        0.96,...                        % 温度的下降率
-        3 ...                           % 邻域解空间的大小
+        2320 ...                          % 最大迭代次数
         );
         option2_time (time) = toc;
         option2_objective(time) = J2;
+    end
+    
+    for time = 1: test_time
+        tic;
+        [J3, ~, ~] = comparation_greedy(Fu,Fs,Tu,W,Pu,H,...
+        lamda,Sigma_square,beta_time,beta_enengy,...
+        k,...                           % 芯片能耗系数
+        userNumber,serverNumber,sub_bandNumber,...
+        2320 ...                          % 最大迭代次数
+        );
+        option3_time (time) = toc;
+        option3_objective(time) = J3;
     end
     
 %     for time = 1: test_time
@@ -103,12 +101,16 @@ function testOptimize(~)
     
     option1_time_mean = mean(option1_time)
     option2_time_mean = mean(option2_time)
+    option3_time_mean = mean(option3_time)
     option1_time_var = var(option1_time)
     option2_time_var = var(option2_time)
+    option3_time_var = var(option3_time)
     option1_objective_mean = mean(option1_objective)
     option2_objective_mean = mean(option2_objective)
+    option3_objective_mean = mean(option3_objective)
     option1_objective_var = var(option1_objective)
     option2_objective_var = var(option2_objective)
+    option3objective_var = var(option3_objective)
     %J
     %X
     %F

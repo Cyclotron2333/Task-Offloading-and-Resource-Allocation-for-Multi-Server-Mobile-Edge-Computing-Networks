@@ -62,7 +62,9 @@ function [max_objective, X, F] = ta( ...
     %T=1000;         
     %T_min=1e-12;    
     %alpha=0.98;     
-    %k=1000;         
+    %k=1000;
+
+    threshold = round(log(userNumber)/log(0.9));
 
     x_old= genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %得到初始解
     
@@ -97,14 +99,18 @@ function [max_objective, X, F] = ta( ...
         picture(iterations,1) = T;
         picture(iterations,2) = fx_old;
         iterations = iterations + 1;
-        T=T*alpha;
+        if iterations < threshold
+            T=T*0.9;
+        else
+            T=T*alpha;
+        end
     end
-    figure
-    plot(picture(:,1),picture(:,2),'b-.');
-    set(gca,'XDir','reverse');      %对X方向反转
-    title('模拟退火算法进行任务调度优化');
-    xlabel('温度T');
-    ylabel('目标函数值');
+%     figure
+%     plot(picture(:,1),picture(:,2),'b-.');
+%     set(gca,'XDir','reverse');      %对X方向反转
+%     title('模拟退火算法进行任务调度优化');
+%     xlabel('温度T');
+%     ylabel('目标函数值');
 end
  
 function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)

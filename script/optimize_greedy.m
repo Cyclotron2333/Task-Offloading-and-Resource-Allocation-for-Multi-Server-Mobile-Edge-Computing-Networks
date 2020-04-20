@@ -55,33 +55,35 @@ function [J, X, F] = ta( ...
     %alpha=0.98;     
     %k=1000;         
 
-    x= genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %随机得到初始解
-    [fx, F] = Fx(x,para);
+    X = genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %随机得到初始解
+    [fx, F] = Fx(X,para);
     J = fx;
     
     picture = zeros(2,1);
     iterations = 1;
     
     while(iterations < maxtime)
-        x_new = getneighbourhood(x,userNumber, serverNumber,sub_bandNumber);
+        x_new = getneighbourhood(X,userNumber, serverNumber,sub_bandNumber);
         [fx_new, F_new] = Fx(x_new,para);
         delta = fx_new-fx;
         if (delta>0)
-            x = x_new;
+            X = x_new;
             fx = fx_new;
             J = fx_new;
-            X = x;
             F = F_new;
         end
         picture(iterations,1) = iterations;
         picture(iterations,2) = J;
+        if iterations > 200 && var(picture(end-200:end,2)) < 1e-6
+            break
+        end
         iterations = iterations + 1;
     end
-%     figure
-%     plot(picture(:,1),picture(:,2),'b-.');
-%     title('贪心算法进行任务调度优化');
-%     xlabel('迭代次数');
-%     ylabel('目标函数值');
+    figure
+    plot(picture(:,1),picture(:,2),'b-.');
+    title('贪心算法进行任务调度优化');
+    xlabel('迭代次数');
+    ylabel('目标函数值');
 end
  
 function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
