@@ -1,8 +1,7 @@
-function [J, X, F] = optimize_greedy(Fu,Fs,Tu,W,Pu,H,...
+function [J, X, F] = optimize_hJTORA(Fu,Fs,Tu,W,Pu,H,...
     lamda,Sigma_square,beta_time,beta_enengy,...
     k,...                       % 芯片能耗系数
-    userNumber,serverNumber,sub_bandNumber,...
-    maxtime ...                 % 最大迭代次数
+    userNumber,serverNumber,sub_bandNumber ...
     )
 
 %optimize 负责执行优化操作
@@ -35,8 +34,7 @@ function [J, X, F] = optimize_greedy(Fu,Fs,Tu,W,Pu,H,...
     userNumber,...              % 用户个数
     serverNumber,...            % 服务器个数
     sub_bandNumber,...          % 子带个数
-    para,...                    % 所需参数
-    maxtime ...                 % 最大迭代次数
+    para ...                    % 所需参数
     );
 
 end
@@ -45,8 +43,7 @@ function [J, X, F] = ta( ...
     userNumber,...              % 用户个数
     serverNumber,...            % 服务器个数
     sub_bandNumber,...          % 子带个数
-    para,...                    % 所需参数
-    maxtime ...                 % 最大迭代次数
+    para...                     % 所需参数
 )
 %TA Task allocation,任务分配算法，采用模拟退火算法
 
@@ -55,125 +52,116 @@ function [J, X, F] = ta( ...
     %alpha=0.98;     
     %k=1000;         
 
-    X = genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %随机得到初始解
-    [fx, F] = Fx(X,para);
-    J = fx;
+    X = genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %得到初始解
+    [J, F] = Fx(X,para);
     
     picture = zeros(2,1);
     iterations = 1;
-    
-    while(iterations < maxtime)
-        x_new = getneighbourhood(X,userNumber, serverNumber,sub_bandNumber);
-        [fx_new, F_new] = Fx(x_new,para);
-        delta = fx_new-fx;
-        if (delta>0)
-            X = x_new;
-            fx = fx_new;
-            J = fx_new;
-            F = F_new;
+    flag = 1;
+    while(flag == 1)
+        flag = 0;
+        [X,J,F,not_find_remove] = remove(X,userNumber,serverNumber,sub_bandNumber,para);
+        if not_find_remove == 1
+            [X,J,F,not_find_exchange] = exchange(X,userNumber,serverNumber,sub_bandNumber,para);
+            if not_find_exchange == 0
+                flag = 1;
+            end
         end
         picture(iterations,1) = iterations;
         picture(iterations,2) = J;
-        if iterations > 200 && var(picture(end-200:end,2)) < 1e-6
-            break
-        end
         iterations = iterations + 1;
     end
     figure
     plot(picture(:,1),picture(:,2),'b-.');
-    title('贪心算法进行任务调度优化');
+    title('hJTORA算法进行任务调度优化');
     xlabel('迭代次数');
     ylabel('目标函数值');
 end
  
-function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
-    user = unidrnd(userNumber);     %指定要扰动的用户对象
-    flag_found = 0;
-    for server = 1:serverNumber
-        for band = 1:sub_bandNumber
-            if x(user,server,band) ~= 0
-                flag_found = 1;
-                break;  %找到用户所分配的服务器和频带
-            end
-        end
-        if flag_found == 1
-            break;
-        end
-    end
-    %两种扰动方式，交换或者赋值
-    chosen = rand;
-    if chosen > 0.2
-        if chosen < 0.75   %55%的概率更改用户的服务器（选择offload）
-            x(user,server,band) = 0;
-            vary_server = unidrnd(serverNumber);    %目标服务器
-            vary_band = randi(sub_bandNumber);    %目标频带
-            x(user,vary_server,vary_band) = 1;
-        else    %25%的概率更改用户的频带（选择offload）
-            if sub_bandNumber ~= 1
-                x(user,server,band) = 0;
-                vary_band = unidrnd(sub_bandNumber);    %目标频带
-                while vary_band == band
-                    vary_band = unidrnd(sub_bandNumber);
-                end
-                x(user,server,vary_band) = 1;
-            end
-        end
-    else 
-        if chosen > 0.05  %15%的概率交换两个用户的服务器和频带
-            if userNumber ~= 1
-                user_other = unidrnd(userNumber);    %指定另一个用户
-                while user_other == user
-                    user_other = unidrnd(userNumber);
-                end
-                flag_found = 0;
-                for server_other = 1:serverNumber
-                    for band_other=1:sub_bandNumber
-                        if x(user_other,server_other,band_other) ~= 0
-                            flag_found = 1;
-                            break;  %找到另一个用户所分配的服务器和频带
+function [res,old_J,old_F,not_find] = remove(x,userNumber,serverNumber,sub_bandNumber,para)
+    user = 1;
+    server = 1;
+    band = 1;
+    not_find = 1;
+    [old_J,old_F] = Fx(x,para);
+    while not_find == 1 && user == userNumber && server == serverNumber && band == sub_bandNumber
+        not_find = 1;
+        for user=1:userNumber
+            for server=1:serverNumber
+                for band=1:sub_bandNumber
+                    if x(user,server,band) == 1
+                        x(user,server,band) = 0;
+                        [new_J,new_F] = Fx(x,para);
+                        if new_J > (1 + 1/1000)*old_J
+                            not_find = 0;
+                            old_J = new_J;
+                            old_F = new_F;
+                            break;
+                        else
+                            x(user,server,band) = 1;
                         end
                     end
-                    if flag_found == 1
+                end
+                if not_find == 0
+                    break
+                end
+            end
+            if not_find == 0
+                break
+            end
+        end
+    end
+    res = x;
+end
+
+function [res,old_J,old_F,not_find] = exchange(x,userNumber,serverNumber,sub_bandNumber,para)
+    not_find = 1;
+    [old_J,old_F] = Fx(x,para);
+    x_new = x;
+    for user=1:userNumber
+        for server=1:serverNumber
+            for band=1:sub_bandNumber
+                if x(user,server,band) == 0
+                    x_new(user,:,:) = 0;
+                    x_new(user,server,band) = 1;
+                    [new_J,new_F] = Fx(x_new,para);
+                    if new_J > (1 + 1/1000)*old_J
+                        not_find = 0;
+                        old_J = new_J;
+                        old_F = new_F;
+                        x = x_new;
                         break;
+                    else
+                        x_new = x;
                     end
                 end
-                xValue =  x(user,server,band);
-                xValue_other =  x(user_other,server_other,band_other);
-                x(user,server,band) = 0;
-                x(user_other,server_other,band_other) = 0;
-                x(user,server_other,band_other) = xValue_other;  %更改频带和服务器
-                x(user_other,server,band) = xValue;
             end
-        else    %5%的概率改变该用户的决策
-            x(user,server,band) = 1 - x(user,server,band);
+            if not_find == 0
+                break
+            end
+        end
+        if not_find == 0
+            break
         end
     end
     res = x;
 end
 
 function seed = genOriginX(userNumber, serverNumber,sub_bandNumber,para)
-%GenRandSeed    生成满足约束的随机种子矩阵
+%GenLargestSeed
     seed = zeros(userNumber, serverNumber,sub_bandNumber);
-    old_J = 0;
+    old_J = zeros(userNumber, serverNumber,sub_bandNumber);
     for user=1:userNumber
-        find = 0;
         for server=1:serverNumber
-            if find == 1
-                break;
-            end
             for band=1:sub_bandNumber
                 seed(user,server,band) = 1;
-                new_J = Fx(seed,para);
-                if new_J > old_J
-                    old_J = new_J;
-                    find = 1;
-                    break;
-                else
-                    seed(user,server,band) = 0;
-                end
+                [old_J(user,server,band),~] = Fx(seed,para);
+                seed(user,server,band) = 0;
             end
         end
     end
+    [user,server,band] = find(old_J == max(old_J(:)));
+    seed(user(1),server(1),band(1)) = 1;
 end
 
 function [Jx, F] = Fx(x,para)

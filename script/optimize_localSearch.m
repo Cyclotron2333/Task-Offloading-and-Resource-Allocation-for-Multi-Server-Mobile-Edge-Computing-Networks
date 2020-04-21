@@ -1,13 +1,11 @@
-function [J, X, F] = ta_model1(Fu,Fs,Tu,W,Pu,H,...
+function [J, X, F] = optimize_localSearch(Fu,Fs,Tu,W,Pu,H,...
     lamda,Sigma_square,beta_time,beta_enengy,...
     k,...                       % 芯片能耗系数
     userNumber,serverNumber,sub_bandNumber,...
-    T_min,...                   % 温度下界
-    alpha,...                   % 温度的下降率
-    n ...                      % 邻域解空间的大小
+    maxtime ...                 % 最大迭代次数
     )
 
-%optimize 负责执行优化操作，传统退火方式
+%optimize 负责执行优化操作，局部搜索算法
     tu_local = zeros(userNumber,1);
     Eu_local = zeros(userNumber,1);
     for i = 1:userNumber    %初始化任务矩阵
@@ -37,71 +35,50 @@ function [J, X, F] = ta_model1(Fu,Fs,Tu,W,Pu,H,...
     userNumber,...              % 用户个数
     serverNumber,...            % 服务器个数
     sub_bandNumber,...          % 子带个数
-    T_min,...                   % 温度下界
-    alpha,...                   % 温度的下降率
-    n, ...                      % 邻域解空间的大小
-    para...                    % 所需参数
+    para,...                    % 所需参数
+    maxtime ...                 % 最大迭代次数
     );
 
 end
 
-function [max_objective, X, F] = ta( ...
+function [J, X, F] = ta( ...
     userNumber,...              % 用户个数
     serverNumber,...            % 服务器个数
     sub_bandNumber,...          % 子带个数
-    T_min,...                   % 温度下界
-    alpha,...                   % 温度的下降率
-    k, ...                      % 邻域解空间的大小
-    para...                    % 所需参数
+    para,...                    % 所需参数
+    maxtime ...                 % 最大迭代次数
 )
-%TA Task allocation,任务分配算法，采用模拟退火算法
+%TA Task allocation,任务分配算法，采用局部搜索算法
 
-    T = userNumber * 0.15;
-    threshold = round(log(userNumber)/log(0.9));
-
-    [x_old,fx_old,F] = genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %得到初始解
+    X = genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %随机得到初始解
+    [fx, F] = Fx(X,para);
+    J = fx;
     
     picture = zeros(2,1);
     iterations = 1;
     
-    max_objective = 0;
-    
-    while(T>T_min)
-        for I=1:k
-            x_new = getneighbourhood(x_old,userNumber, serverNumber,sub_bandNumber);
-            [fx_new, F_new] = Fx(x_new,para);
-            delta = fx_new-fx_old;
-            if (delta>0)
-                x_old = x_new;
-                fx_old = fx_new;
-                if fx_new > max_objective
-                    max_objective = fx_new;
-                    X = x_new;
-                    F = F_new;
-                end
-            else
-                pro=getProbability(delta,T);
-                if(pro>rand)
-                    x_old=x_new;
-                    fx_old = fx_new;
-                end
-            end
+    while(iterations<maxtime)
+        x_new = getneighbourhood(X,userNumber, serverNumber,sub_bandNumber);
+        [fx_new, F_new] = Fx(x_new,para);
+        delta = fx_new-fx;
+        if (delta>0)
+            X = x_new;
+            fx = fx_new;
+            J = fx_new;
+            F = F_new;
         end
-        picture(iterations,1) = T;
-        picture(iterations,2) = fx_old;
+        picture(iterations,1) = iterations;
+        picture(iterations,2) = J;
+        if iterations > 600 && var(picture(end-600:end,2)) < 1e-6
+            break
+        end
         iterations = iterations + 1;
-        if iterations < threshold
-            T=T*0.9;
-        else
-            T=T*alpha;
-        end
     end
-%     figure
-%     plot(picture(:,1),picture(:,2),'b-.');
-%     set(gca,'XDir','reverse');      %对X方向反转
-%     title('模拟退火算法进行任务调度优化');
-%     xlabel('温度T');
-%     ylabel('目标函数值');
+    figure
+    plot(picture(:,1),picture(:,2),'b-.');
+    title('局部搜索算法进行任务调度优化');
+    xlabel('迭代次数');
+    ylabel('目标函数值');
 end
  
 function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
@@ -168,32 +145,27 @@ function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
     end
     res = x;
 end
- 
-function p = getProbability(delta,t)
-    p = exp(delta/t);
-end
 
-function [seed,old_J,F] = genOriginX(userNumber, serverNumber,sub_bandNumber,para)
+function seed = genOriginX(userNumber, serverNumber,sub_bandNumber,para)
 %GenRandSeed    生成满足约束的随机种子矩阵
     seed = zeros(userNumber, serverNumber,sub_bandNumber);
     old_J = 0;
     for user=1:userNumber
         find = 0;
         for server=1:serverNumber
+            if find == 1
+                break;
+            end
             for band=1:sub_bandNumber
                 seed(user,server,band) = 1;
-                [new_J,new_F] = Fx(seed,para);
+                new_J = Fx(seed,para);
                 if new_J > old_J
                     old_J = new_J;
-                    F = new_F;
                     find = 1;
                     break;
                 else
                     seed(user,server,band) = 0;
                 end
-            end
-            if find == 1
-                break;
             end
         end
     end
