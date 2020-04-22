@@ -45,12 +45,7 @@ function [J, X, F] = ta( ...
     sub_bandNumber,...          % 子带个数
     para...                     % 所需参数
 )
-%TA Task allocation,任务分配算法，采用模拟退火算法
-
-    %T=1000;         
-    %T_min=1e-12;    
-    %alpha=0.98;     
-    %k=1000;         
+%TA Task allocation,任务分配算法，采用论文“Joint Task Of?oading and Resource Allocation for Multi-Server Mobile-Edge Computing Networks”的算法
 
     X = genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %得到初始解
     [J, F] = Fx(X,para);
@@ -71,11 +66,11 @@ function [J, X, F] = ta( ...
         picture(iterations,2) = J;
         iterations = iterations + 1;
     end
-    figure
-    plot(picture(:,1),picture(:,2),'b-.');
-    title('hJTORA算法进行任务调度优化');
-    xlabel('迭代次数');
-    ylabel('目标函数值');
+%     figure
+%     plot(picture(:,1),picture(:,2),'b-.');
+%     title('hJTORA算法进行任务调度优化');
+%     xlabel('迭代次数');
+%     ylabel('目标函数值');
 end
  
 function [res,old_J,old_F,not_find] = remove(x,userNumber,serverNumber,sub_bandNumber,para)
@@ -176,7 +171,7 @@ function [Jx, F] = Fx(x,para)
         end
         if n > 0
             for user = 1:n
-                Pi = getPi(x,user,server,Us(user,2),sub_bandNumber,multiplexingNumber(Us(user,2)),para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma_square,para.W);
+                Pi = getPi(x,Us(user,1),server,Us(user,2),sub_bandNumber,multiplexingNumber(Us(user,2)),para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma_square,para.W);
                 Jx = Jx + para.lamda(Us(user,1)) * (1 - Pi);
             end
         end
@@ -200,7 +195,7 @@ function Gamma = getGamma(G,Pu,Sigma_square,H,user,server,band)
         if i ~= server
             [Us,n] = genUs(G,i);
             for k = 1:n
-                denominator = denominator + G(Us(k,1),i,band) * Pu(Us(k,1)) * H(Us(k,1),i,band);
+                denominator = denominator + G(Us(k,1),i,band) * Pu(Us(k,1)) * H(Us(k,1),server,band);
             end
         end
     end

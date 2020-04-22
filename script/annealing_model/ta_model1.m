@@ -1,4 +1,52 @@
-function [max_objective, X, F] = ta_annealing( ...
+function [J, X, F] = ta_model1(Fu,Fs,Tu,W,Pu,H,...
+    lamda,Sigma_square,beta_time,beta_enengy,...
+    k,...                       % 芯片能耗系数
+    userNumber,serverNumber,sub_bandNumber,...
+    T_min,...                   % 温度下界
+    alpha,...                   % 温度的下降率
+    n ...                      % 邻域解空间的大小
+    )
+
+%optimize 负责执行优化操作，采用双阶段不同下降率的模拟退火方式
+
+    tu_local = zeros(userNumber,1);
+    Eu_local = zeros(userNumber,1);
+    for i = 1:userNumber    %初始化任务矩阵
+        tu_local(i) = Tu(i).circle/Fu(i);   %本地计算时间矩阵
+        Eu_local(i) = k * (Fu(i))^2 * Tu(i).circle;    %本地计算能耗矩阵
+    end
+    Eta_user = zeros(userNumber,1);
+    for i=1:userNumber  %计算CRA所需的η
+        Eta_user(i) = beta_time(i) * Tu(i).circle * lamda(i) / tu_local(i);
+    end
+    
+    %封装参数
+    para.beta_time = beta_time;
+    para.beta_enengy = beta_enengy;
+    para.Tu = Tu;
+    para.tu_local = tu_local;
+    para.Eu_local = Eu_local;
+    para.W = W;
+    para.Ht = H;
+    para.lamda = lamda;
+    para.Pu = Pu;
+    para.Sigma_square = Sigma_square;
+    para.Fs = Fs;
+    para.Eta_user = Eta_user;
+    
+   [J, X, F] = ta( ...
+    userNumber,...              % 用户个数
+    serverNumber,...            % 服务器个数
+    sub_bandNumber,...          % 子带个数
+    T_min,...                   % 温度下界
+    alpha,...                   % 温度的下降率
+    n, ...                      % 邻域解空间的大小
+    para...                    % 所需参数
+    );
+
+end
+
+function [max_objective, X, F] = ta( ...
     userNumber,...              % 用户个数
     serverNumber,...            % 服务器个数
     sub_bandNumber,...          % 子带个数
@@ -164,7 +212,7 @@ function [Jx, F] = Fx(x,para)
         end
         if n > 0
             for user = 1:n
-                Pi = getPi(x,user,server,Us(user,2),sub_bandNumber,multiplexingNumber(Us(user,2)),para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma_square,para.W);
+                Pi = getPi(x,Us(user,1),server,Us(user,2),sub_bandNumber,multiplexingNumber(Us(user,2)),para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma_square,para.W);
                 Jx = Jx + para.lamda(Us(user,1)) * (1 - Pi);
             end
         end
@@ -179,7 +227,6 @@ function Pi = getPi(x,user,server,band,sub_bandNumber,multiplexingNumber,beta_ti
     Gamma_us = getGamma(x,Pu,Sigma_square,Ht,user,server,band);
     Pi = Pi * Tu(user).data / B / log2(1 + Gamma_us) / multiplexingNumber;
 end
-
 function Gamma = getGamma(G,Pu,Sigma_square,H,user,server,band)
 %GetGamma 计算Gamma_us
     [~,serverNumber,~] = size(G);
@@ -188,10 +235,11 @@ function Gamma = getGamma(G,Pu,Sigma_square,H,user,server,band)
         if i ~= server
             [Us,n] = genUs(G,i);
             for k = 1:n
-                denominator = denominator + G(Us(k,1),i,band) * Pu(Us(k,1)) * H(Us(k,1),i,band);
+                denominator = denominator + G(Us(k,1),i,band) * Pu(Us(k,1)) * H(Us(k,1),server,band);
             end
         end
     end
     denominator = denominator + Sigma_square;
     Gamma = Pu(user)*H(user,server,band)/denominator;
 end
+

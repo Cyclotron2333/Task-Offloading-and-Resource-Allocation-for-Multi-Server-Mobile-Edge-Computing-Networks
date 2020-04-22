@@ -1,4 +1,4 @@
-function [J, X, F] = optimize_annealing(Fu,Fs,Tu,W,Pu,H,...
+function [J, X, F] = ta_model4(Fu,Fs,Tu,W,Pu,H,...
     lamda,Sigma_square,beta_time,beta_enengy,...
     k,...                       % 芯片能耗系数
     userNumber,serverNumber,sub_bandNumber,...
@@ -7,7 +7,7 @@ function [J, X, F] = optimize_annealing(Fu,Fs,Tu,W,Pu,H,...
     n ...                      % 邻域解空间的大小
     )
 
-%optimize 负责执行优化操作
+%optimize 负责执行优化操作，融合混沌算法的模拟退火算法
     tu_local = zeros(userNumber,1);
     Eu_local = zeros(userNumber,1);
     for i = 1:userNumber    %初始化任务矩阵
@@ -33,14 +33,15 @@ function [J, X, F] = optimize_annealing(Fu,Fs,Tu,W,Pu,H,...
     para.Fs = Fs;
     para.Eta_user = Eta_user;
     
-   [J, X, F] = task_allocation( ...
+   [J, X, F] = ta_chao_annealing( ...
     userNumber,...              % 用户个数
     serverNumber,...            % 服务器个数
     sub_bandNumber,...          % 子带个数
     T_min,...                   % 温度下界
     alpha,...                   % 温度的下降率
     n, ...                      % 邻域解空间的大小
-    para...                    % 所需参数
+    para...                     % 所需参数
     );
-
 end
+
+

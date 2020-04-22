@@ -45,12 +45,7 @@ function [J, X, F] = ta( ...
     sub_bandNumber,...          % 子带个数
     para ...                    % 所需参数
 )
-%TA Task allocation,任务分配算法，采用模拟退火算法
-
-    %T=1000;         
-    %T_min=1e-12;    
-    %alpha=0.98;     
-    %k=1000;         
+%TA Task allocation,任务分配算法，采用穷举法
 
     x = zeros(userNumber, serverNumber,sub_bandNumber);
     
@@ -64,6 +59,8 @@ function [J, X, F] = ta( ...
     [J,num] = max([array.J]);
     X = array(num).F;
     F = array(num).x;
+    
+    clear global;
 end
  
 function search(user,x,userNumber,serverNumber,sub_bandNumber,para)
@@ -96,7 +93,7 @@ function [Jx, F] = Fx(x,para)
         end
         if n > 0
             for user = 1:n
-                Pi = getPi(x,user,server,Us(user,2),sub_bandNumber,multiplexingNumber(Us(user,2)),para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma_square,para.W);
+                Pi = getPi(x,Us(user,1),server,Us(user,2),sub_bandNumber,multiplexingNumber(Us(user,2)),para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma_square,para.W);
                 Jx = Jx + para.lamda(Us(user,1)) * (1 - Pi);
             end
         end
@@ -120,7 +117,7 @@ function Gamma = getGamma(G,Pu,Sigma_square,H,user,server,band)
         if i ~= server
             [Us,n] = genUs(G,i);
             for k = 1:n
-                denominator = denominator + G(Us(k,1),i,band) * Pu(Us(k,1)) * H(Us(k,1),i,band);
+                denominator = denominator + G(Us(k,1),i,band) * Pu(Us(k,1)) * H(Us(k,1),server,band);
             end
         end
     end
