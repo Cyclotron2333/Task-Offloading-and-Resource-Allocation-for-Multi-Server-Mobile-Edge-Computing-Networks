@@ -1,3 +1,4 @@
+clear;
 serverNumber = 9;
 sub_bandNumber = 3;
 Fs = 20e9 * ones(serverNumber,1);   %服务器运算能力矩阵
@@ -8,9 +9,9 @@ gapOfServer = 25;
 %测试不同用户数下的算法的计算时间
 index = 1;
 
-annealing_time_mean = zeros(4,1);
+annealing_time_mean = zeros(11,1);
 
-annealing_objective_mean = zeros(4,1);
+annealing_objective_mean = zeros(11,1);
     
 for userNumber = 5:10:105
     H = genGain(userNumber,serverNumber,sub_bandNumber,gapOfServer);   %用户到服务器的增益矩阵
@@ -19,11 +20,11 @@ for userNumber = 5:10:105
     task_size = 420 * 1024 * 8; %480KB
     Tu = repmat(T0,userNumber,1);
     for i = 1:userNumber    %初始化任务矩阵
-    Tu(i).data = task_size;
-    Tu(i).circle = task_circle;
+        Tu(i).data = task_size;
+        Tu(i).circle = task_circle;
     end
     lamda = ones(userNumber,1);
-    beta_time = 0.2 * ones(userNumber,1);
+    beta_time = 0.5 * ones(userNumber,1);
     beta_enengy = ones(userNumber,1) - beta_time;
 
     Pu = 0.001 * 10^2 * ones(userNumber,1);    %用户输出功率矩阵

@@ -1,14 +1,13 @@
-function [J, X, F] = ta_model1(Fu,Fs,Tu,W,Pu,H,...
+function [J, X, F] = ta_2CoolingMethod_model(Fu,Fs,Tu,W,Pu,H,...
     lamda,Sigma_square,beta_time,beta_enengy,...
     k,...                       % 芯片能耗系数
     userNumber,serverNumber,sub_bandNumber,...
     T_min,...                   % 温度下界
     alpha,...                   % 温度的下降率
-    n ...                      % 邻域解空间的大小
+    n ...                       % 邻域解空间的大小
     )
 
-%optimize 负责执行优化操作，采用双阶段不同下降率的模拟退火方式
-
+%optimize 负责执行优化操作，混合退火方式
     tu_local = zeros(userNumber,1);
     Eu_local = zeros(userNumber,1);
     for i = 1:userNumber    %初始化任务矩阵
@@ -34,37 +33,36 @@ function [J, X, F] = ta_model1(Fu,Fs,Tu,W,Pu,H,...
     para.Fs = Fs;
     para.Eta_user = Eta_user;
     
-   [J, X, F] = ta( ...
+   [J, X, F] = ta_2CoolingMethod_annealing( ...
     userNumber,...              % 用户个数
     serverNumber,...            % 服务器个数
     sub_bandNumber,...          % 子带个数
     T_min,...                   % 温度下界
     alpha,...                   % 温度的下降率
     n, ...                      % 邻域解空间的大小
-    para...                    % 所需参数
+    para...                     % 所需参数
     );
 
 end
 
-function [max_objective, X, F] = ta( ...
+function [max_objective, X, F] = ta_2CoolingMethod_annealing( ...
     userNumber,...              % 用户个数
     serverNumber,...            % 服务器个数
     sub_bandNumber,...          % 子带个数
     T_min,...                   % 温度下界
     alpha,...                   % 温度的下降率
     k, ...                      % 邻域解空间的大小
-    para...                    % 所需参数
+    para...                     % 所需参数
 )
 %TA Task allocation,任务分配算法，采用模拟退火算法
 
-    T = userNumber * 0.15;
-    threshold = round(log(userNumber)/log(0.9));
+    T = userNumber * 0.15;    
 
-    [x_old,fx_old,F] = genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %得到初始解
+    [x_old,fx_old,F] = genOriginX(userNumber,serverNumber,sub_bandNumber,para);    %得到初始解
     
     picture = zeros(2,1);
     iterations = 1;
-    
+    threshold = 7;
     max_objective = 0;
     
     while(T>T_min)
@@ -83,7 +81,7 @@ function [max_objective, X, F] = ta( ...
             else
                 pro=getProbability(delta,T);
                 if(pro>rand)
-                    x_old=x_new;
+                    x_old = x_new;
                     fx_old = fx_new;
                 end
             end
@@ -91,16 +89,16 @@ function [max_objective, X, F] = ta( ...
         picture(iterations,1) = T;
         picture(iterations,2) = fx_old;
         iterations = iterations + 1;
-        if iterations < threshold
-            T=T*0.9;
+        if iterations <= threshold
+             T=T/log(1+iterations);
         else
-            T=T*alpha;
+             T=T*alpha;
         end
     end
 %     figure
 %     plot(picture(:,1),picture(:,2),'b-.');
 %     set(gca,'XDir','reverse');      %对X方向反转
-%     title('模拟退火算法进行任务调度优化');
+%     title('混合降温-模拟退火算法进行任务调度优化');
 %     xlabel('温度T');
 %     ylabel('目标函数值');
 end
@@ -225,8 +223,9 @@ function Pi = getPi(x,user,server,band,sub_bandNumber,multiplexingNumber,beta_ti
     B = W / sub_bandNumber;
     Pi = beta_time(user)/tu_local(user) + beta_enengy(user)/Eu_local(user)*Pu(user);
     Gamma_us = getGamma(x,Pu,Sigma_square,Ht,user,server,band);
-    Pi = Pi * Tu(user).data / B / log2(1 + Gamma_us) / multiplexingNumber;
+    Pi = Pi * Tu(user).data / B / log2(1 + Gamma_us) * multiplexingNumber;
 end
+
 function Gamma = getGamma(G,Pu,Sigma_square,H,user,server,band)
 %GetGamma 计算Gamma_us
     [~,serverNumber,~] = size(G);

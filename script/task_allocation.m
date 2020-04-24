@@ -9,13 +9,11 @@ function [max_objective, X, F] = task_allocation( ...
 )
 %TA Task allocation,任务分配算法，采用模拟退火算法
 
-    T = userNumber * 0.15;    
-
-    [x_old,fx_old,F] = genOriginX(userNumber,serverNumber,sub_bandNumber,para);    %得到初始解
+    [x_old,fx_old,F] = genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %得到初始解
     
     picture = zeros(2,1);
     iterations = 1;
-    threshold = 7;
+    T = userNumber;
     max_objective = 0;
     
     while(T>T_min)
@@ -34,7 +32,7 @@ function [max_objective, X, F] = task_allocation( ...
             else
                 pro=getProbability(delta,T);
                 if(pro>rand)
-                    x_old = x_new;
+                    x_old=x_new;
                     fx_old = fx_new;
                 end
             end
@@ -42,16 +40,12 @@ function [max_objective, X, F] = task_allocation( ...
         picture(iterations,1) = T;
         picture(iterations,2) = fx_old;
         iterations = iterations + 1;
-        if iterations <= threshold
-             T=T/log(1+iterations);
-        else
-             T=T*alpha;
-        end
+        T=T*alpha;
     end
 %     figure
 %     plot(picture(:,1),picture(:,2),'b-.');
 %     set(gca,'XDir','reverse');      %对X方向反转
-%     title('混合降温-模拟退火算法进行任务调度优化');
+%     title('标准模拟退火算法进行任务调度优化');
 %     xlabel('温度T');
 %     ylabel('目标函数值');
 end
@@ -149,48 +143,4 @@ function [seed,old_J,F] = genOriginX(userNumber, serverNumber,sub_bandNumber,par
             end
         end
     end
-end
-
-function [Jx, F] = Fx(x,para)
-    [F,res_cra] = cra(x,para.Fs,para.Eta_user);
-    Jx = 0;
-    [~,serverNumber,sub_bandNumber] = size(x);
-    for server = 1:serverNumber
-        [Us,n] = genUs(x,server);
-        multiplexingNumber = zeros(sub_bandNumber,1);
-        for band = 1:sub_bandNumber
-            multiplexingNumber(band) = sum(x(:,server,band));
-        end
-        if n > 0
-            for user = 1:n
-                Pi = getPi(x,Us(user,1),server,Us(user,2),sub_bandNumber,multiplexingNumber(Us(user,2)),para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma_square,para.W);
-                Jx = Jx + para.lamda(Us(user,1)) * (1 - Pi);
-            end
-        end
-    end
-    Jx = (Jx - res_cra);
-end
-
-function Pi = getPi(x,user,server,band,sub_bandNumber,multiplexingNumber,beta_time,beta_enengy,tu_local,Eu_local,Tu,Pu,Ht,Sigma_square,W)
-%GetPi 计算Pi_us
-    B = W / sub_bandNumber;
-    Pi = beta_time(user)/tu_local(user) + beta_enengy(user)/Eu_local(user)*Pu(user);
-    Gamma_us = getGamma(x,Pu,Sigma_square,Ht,user,server,band);
-    Pi = Pi * Tu(user).data / B / log2(1 + Gamma_us) / multiplexingNumber;
-end
-
-function Gamma = getGamma(G,Pu,Sigma_square,H,user,server,band)
-%GetGamma 计算Gamma_us
-    [~,serverNumber,~] = size(G);
-    denominator = 0;
-    for i = 1:serverNumber
-        if i ~= server
-            [Us,n] = genUs(G,i);
-            for k = 1:n
-                denominator = denominator + G(Us(k,1),i,band) * Pu(Us(k,1)) * H(Us(k,1),server,band);
-            end
-        end
-    end
-    denominator = denominator + Sigma_square;
-    Gamma = Pu(user)*H(user,server,band)/denominator;
 end

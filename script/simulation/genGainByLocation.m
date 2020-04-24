@@ -1,6 +1,5 @@
-function H = genGain(userNumber,serverNumber,sub_bandNumber,gapOfServer)
-%GENGAIN 生成随机的信道增益
-    [serverMap,userMap] = genLocation(userNumber,serverNumber,gapOfServer);
+function H = genGainByLocation(userNumber,serverNumber,sub_bandNumber,serverMap,userMap)
+%GENGAIN 根据坐标图生成随机的信道增益
     H = zeros(userNumber,serverNumber,sub_bandNumber);
     for i = 1:userNumber
         for j = 1:serverNumber
@@ -13,5 +12,3 @@ function H = genGain(userNumber,serverNumber,sub_bandNumber,gapOfServer)
 %     hold on
 %     plot(userMap(:,1),userMap(:,2),'.b')
 end
-
-

@@ -36,7 +36,7 @@ for index = 1:4
     W = 20e6;   %系统总带宽
     k = 5e-27;
 
-    test_time = 20;  %每个算法循环次数
+    test_time = 15;  %每个算法循环次数
 
     annealing_time = zeros(test_time,1);
     annealing_objective = zeros(test_time,1);

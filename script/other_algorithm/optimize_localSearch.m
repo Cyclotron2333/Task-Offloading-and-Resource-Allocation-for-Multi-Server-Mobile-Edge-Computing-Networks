@@ -31,6 +31,9 @@ function [J, X, F] = optimize_localSearch(Fu,Fs,Tu,W,Pu,H,...
     para.Fs = Fs;
     para.Eta_user = Eta_user;
     
+    p = [-5.32758370173747e-36,1.09167336016681e-32,-1.03802502719758e-29,6.07935588719153e-27,-2.45478823556481e-24,7.24877156748154e-22,-1.62027614166011e-19,2.79969318773410e-17,-3.78649533020796e-15,4.03403674219988e-13,-3.39081920039635e-11,2.24284299382135e-09,-1.15967362545011e-07,4.63633298897616e-06,-0.000141072653394454,0.00319619818685363,-0.0523399612167956,0.595502552120247,-4.49373884727681,22.4592906556806,308.641802772312];
+    maxtime = polyval(p,userNumber);
+    
    [J, X, F] = ta( ...
     userNumber,...              % 用户个数
     serverNumber,...            % 服务器个数
@@ -52,7 +55,7 @@ function [J, X, F] = ta( ...
 
 %     X = genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %随机得到初始解
     
-    X = zeros(userNumber, serverNumber,sub_bandNumber);    %随机得到初始解
+    X = zeros(userNumber, serverNumber,sub_bandNumber);
     
     [fx, F] = Fx(X,para);
     J = fx;
@@ -173,49 +176,5 @@ function seed = genOriginX(userNumber, serverNumber,sub_bandNumber,para)
             end
         end
     end
-end
-
-function [Jx, F] = Fx(x,para)
-    [F,res_cra] = cra(x,para.Fs,para.Eta_user);
-    Jx = 0;
-    [~,serverNumber,sub_bandNumber] = size(x);
-    for server = 1:serverNumber
-        [Us,n] = genUs(x,server);
-        multiplexingNumber = zeros(sub_bandNumber,1);
-        for band = 1:sub_bandNumber
-            multiplexingNumber(band) = sum(x(:,server,band));
-        end
-        if n > 0
-            for user = 1:n
-                Pi = getPi(x,Us(user,1),server,Us(user,2),sub_bandNumber,multiplexingNumber(Us(user,2)),para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma_square,para.W);
-                Jx = Jx + para.lamda(Us(user,1)) * (1 - Pi);
-            end
-        end
-    end
-    Jx = (Jx - res_cra);
-end
-
-function Pi = getPi(x,user,server,band,sub_bandNumber,multiplexingNumber,beta_time,beta_enengy,tu_local,Eu_local,Tu,Pu,Ht,Sigma_square,W)
-%GetPi 计算Pi_us
-    B = W / sub_bandNumber;
-    Pi = beta_time(user)/tu_local(user) + beta_enengy(user)/Eu_local(user)*Pu(user);
-    Gamma_us = getGamma(x,Pu,Sigma_square,Ht,user,server,band);
-    Pi = Pi * Tu(user).data / B / log2(1 + Gamma_us) / multiplexingNumber;
-end
-
-function Gamma = getGamma(G,Pu,Sigma_square,H,user,server,band)
-%GetGamma 计算Gamma_us
-    [~,serverNumber,~] = size(G);
-    denominator = 0;
-    for i = 1:serverNumber
-        if i ~= server
-            [Us,n] = genUs(G,i);
-            for k = 1:n
-                denominator = denominator + G(Us(k,1),i,band) * Pu(Us(k,1)) * H(Us(k,1),server,band);
-            end
-        end
-    end
-    denominator = denominator + Sigma_square;
-    Gamma = Pu(user)*H(user,server,band)/denominator;
 end
 

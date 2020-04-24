@@ -1,14 +1,13 @@
-function [J, X, F] = ta_model2(Fu,Fs,Tu,W,Pu,H,...
+function [J, X, F, time, energy] = picture_used_annealing_optimize(Fu,Fs,Tu,W,Pu,H,...
     lamda,Sigma_square,beta_time,beta_enengy,...
     k,...                       % 芯片能耗系数
     userNumber,serverNumber,sub_bandNumber,...
-    T,...                       % 初始化温度值
-    maxTime,...                 % 最大迭代次数
+    T_min,...                   % 温度下界
     alpha,...                   % 温度的下降率
     n ...                      % 邻域解空间的大小
     )
 
-%optimize 负责执行优化操作，采用迭代次数进行循环判断
+%optimize 负责执行优化操作
     tu_local = zeros(userNumber,1);
     Eu_local = zeros(userNumber,1);
     for i = 1:userNumber    %初始化任务矩阵
@@ -34,42 +33,43 @@ function [J, X, F] = ta_model2(Fu,Fs,Tu,W,Pu,H,...
     para.Fs = Fs;
     para.Eta_user = Eta_user;
     
-   [J, X, F] = ta_limitIterate_annealing_( ...
+   [J, X, F, time, energy] = ta( ...
     userNumber,...              % 用户个数
     serverNumber,...            % 服务器个数
     sub_bandNumber,...          % 子带个数
-    T,...                       % 初始化温度值
-    maxTime,...                 % 最大迭代次数
+    T_min,...                   % 温度下界
     alpha,...                   % 温度的下降率
     n, ...                      % 邻域解空间的大小
-    para...                     % 所需参数
+    para...                    % 所需参数
     );
 
 end
 
-function [max_objective, X, F] = ta_limitIterate_annealing_( ...
+function [max_objective, X, F, time, energy] = ta( ...
     userNumber,...              % 用户个数
     serverNumber,...            % 服务器个数
     sub_bandNumber,...          % 子带个数
-    T,...                       % 初始化温度值
-    maxTime,...                 % 最大迭代次数
+    T_min,...                   % 温度下界
     alpha,...                   % 温度的下降率
     k, ...                      % 邻域解空间的大小
     para...                     % 所需参数
 )
 %TA Task allocation,任务分配算法，采用模拟退火算法
 
-    [x_old,fx_old,F] = genOriginX(userNumber, serverNumber,sub_bandNumber,para);    %随机得到初始解
+    T = userNumber * 0.15;    
+
+    [x_old,fx_old,F,time,energy] = genOriginX(userNumber,serverNumber,sub_bandNumber,para);    %得到初始解
     
     picture = zeros(2,1);
     iterations = 1;
+    threshold = 7;
+    max_objective = fx_old;
+    X = x_old;
     
-    max_objective = 0;
-    
-    while(iterations<maxTime)
+    while(T>T_min)
         for I=1:k
             x_new = getneighbourhood(x_old,userNumber, serverNumber,sub_bandNumber);
-            [fx_new, F_new] = Fx(x_new,para);
+            [fx_new, F_new, time_new, energy_new] = Fx(x_new,para);
             delta = fx_new-fx_old;
             if (delta>0)
                 x_old = x_new;
@@ -78,6 +78,8 @@ function [max_objective, X, F] = ta_limitIterate_annealing_( ...
                     max_objective = fx_new;
                     X = x_new;
                     F = F_new;
+                    time = time_new;
+                    energy = energy_new;
                 end
             else
                 pro=getProbability(delta,T);
@@ -90,14 +92,15 @@ function [max_objective, X, F] = ta_limitIterate_annealing_( ...
         picture(iterations,1) = T;
         picture(iterations,2) = fx_old;
         iterations = iterations + 1;
-        T=T*alpha;
+        if iterations <= threshold
+             T=T/log(1+iterations);
+        else
+             T=T*alpha;
+        end
     end
-%     figure
-%     plot(picture(:,1),picture(:,2),'b-.');
-%     set(gca,'XDir','reverse');      %对X方向反转
-%     title('迭代次数判断-模拟退火算法进行任务调度优化');
-%     xlabel('温度T');
-%     ylabel('目标函数值');
+    [user,~] = find(~any(F,2));
+    time = time + sum(para.tu_local(user));
+    energy = energy + sum(para.Eu_local(user));
 end
  
 function res = getneighbourhood(x,userNumber,serverNumber,sub_bandNumber)
@@ -169,19 +172,23 @@ function p = getProbability(delta,t)
     p = exp(delta/t);
 end
 
-function [seed,old_J,F] = genOriginX(userNumber, serverNumber,sub_bandNumber,para)
+function [seed,old_J,F, time_offload, energy_offload] = genOriginX(userNumber, serverNumber,sub_bandNumber,para)
 %GenRandSeed    生成满足约束的随机种子矩阵
     seed = zeros(userNumber, serverNumber,sub_bandNumber);
     old_J = 0;
+    time_offload = 0;
+    energy_offload = 0;
     for user=1:userNumber
         find = 0;
         for server=1:serverNumber
             for band=1:sub_bandNumber
                 seed(user,server,band) = 1;
-                [new_J,new_F] = Fx(seed,para);
+                [new_J, new_F, time_new, energy_new] = Fx(seed,para);
                 if new_J > old_J
                     old_J = new_J;
                     F = new_F;
+                    time_offload = time_new;
+                    energy_offload = energy_new;
                     find = 1;
                     break;
                 else
@@ -195,7 +202,9 @@ function [seed,old_J,F] = genOriginX(userNumber, serverNumber,sub_bandNumber,par
     end
 end
 
-function [Jx, F] = Fx(x,para)
+function [Jx, F, time_offload, energy_offload] = Fx(x,para)
+    time_offload = 0;
+    energy_offload = 0;
     [F,res_cra] = cra(x,para.Fs,para.Eta_user);
     Jx = 0;
     [~,serverNumber,sub_bandNumber] = size(x);
@@ -207,7 +216,9 @@ function [Jx, F] = Fx(x,para)
         end
         if n > 0
             for user = 1:n
-                Pi = getPi(x,Us(user,1),server,Us(user,2),sub_bandNumber,multiplexingNumber(Us(user,2)),para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma_square,para.W);
+                [Pi, time_upload, energy_upload] = getPi(x,Us(user,1),server,Us(user,2),sub_bandNumber,multiplexingNumber(Us(user,2)),para.beta_time,para.beta_enengy,para.tu_local,para.Eu_local,para.Tu,para.Pu,para.Ht,para.Sigma_square,para.W);
+                time_offload = time_offload + time_upload + para.Tu(Us(user,1)).circle / F(Us(user,1),server);
+                energy_offload = energy_offload + energy_upload;
                 Jx = Jx + para.lamda(Us(user,1)) * (1 - Pi);
             end
         end
@@ -215,12 +226,14 @@ function [Jx, F] = Fx(x,para)
     Jx = (Jx - res_cra);
 end
 
-function Pi = getPi(x,user,server,band,sub_bandNumber,multiplexingNumber,beta_time,beta_enengy,tu_local,Eu_local,Tu,Pu,Ht,Sigma_square,W)
+function [Pi, time_upload, energy_upload] = getPi(x,user,server,band,sub_bandNumber,multiplexingNumber,beta_time,beta_enengy,tu_local,Eu_local,Tu,Pu,Ht,Sigma_square,W)
 %GetPi 计算Pi_us
     B = W / sub_bandNumber;
     Pi = beta_time(user)/tu_local(user) + beta_enengy(user)/Eu_local(user)*Pu(user);
     Gamma_us = getGamma(x,Pu,Sigma_square,Ht,user,server,band);
-    Pi = Pi * Tu(user).data / B / log2(1 + Gamma_us) / multiplexingNumber;
+    Pi = Pi * Tu(user).data / B / log2(1 + Gamma_us) * multiplexingNumber;
+    time_upload = Tu(user).data / B / log2(1 + Gamma_us) * multiplexingNumber;
+    energy_upload = Pu(user) * time_upload;
 end
 
 function Gamma = getGamma(G,Pu,Sigma_square,H,user,server,band)
@@ -238,4 +251,3 @@ function Gamma = getGamma(G,Pu,Sigma_square,H,user,server,band)
     denominator = denominator + Sigma_square;
     Gamma = Pu(user)*H(user,server,band)/denominator;
 end
-
