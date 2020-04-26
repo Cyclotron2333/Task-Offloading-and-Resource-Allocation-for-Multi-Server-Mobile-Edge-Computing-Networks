@@ -1,3 +1,4 @@
+clear;
 serverNumber = 9;
 sub_bandNumber = 3;
 gapOfServer = 25;
@@ -47,7 +48,7 @@ for beta_t = 0.05:0.15:0.95
             k,...                           % 芯片能耗系数
             userNumber,serverNumber,sub_bandNumber,...
             10e-9,...                       % 温度下界
-            0.95,...                        % 温度的下降率
+            0.97,...                        % 温度的下降率
             5 ...                           % 邻域解空间的大小
             );
             time_consumption(time) = tconsumption/userNumber;
@@ -63,19 +64,23 @@ end
    
 figure
 x = 0.05:0.15:0.95;
-plot(x,time_mean(:,1));
+plot(x,time_mean(:,1),'-s');
 hold on
-plot(x,time_mean(:,2));
+plot(x,time_mean(:,2),'-o');
 hold on
-plot(x,time_mean(:,3));
+plot(x,time_mean(:,3),'-d');
 xlabel('用户对时间的偏好值');
 ylabel('平均每个用户的计算时间');
+grid on
+legend('用户数为20','用户数为50','用户数为90');
 
 figure
-plot(x,energy_mean(:,1));
+plot(x,energy_mean(:,1),'-s');
 hold on
-plot(x,energy_mean(:,2));
+plot(x,energy_mean(:,2),'-o');
 hold on
-plot(x,energy_mean(:,3));
+plot(x,energy_mean(:,3),'-d');
 xlabel('用户对时间的偏好值');
 ylabel('平均每个用户的能量消耗');
+grid on
+legend('用户数为20','用户数为50','用户数为90');

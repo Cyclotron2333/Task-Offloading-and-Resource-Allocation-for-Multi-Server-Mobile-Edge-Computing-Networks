@@ -43,12 +43,12 @@ for task_circle = [1:5]*1e9
     test_time = 20;  %每个算法循环次数
 
     annealing_time = zeros(test_time,1);
-    hJTORA_time = zeros(test_time,1);
+    hJTORA_time = zeros(5,1);
     greedy_time = zeros(test_time,1);
     localSearch_time = zeros(test_time,1);
     
     annealing_objective = zeros(test_time,1);
-    hJTORA_objective = zeros(test_time,1);
+    hJTORA_objective = zeros(5,1);
     greedy_objective = zeros(test_time,1);
     localSearch_objective = zeros(test_time,1);
 
@@ -72,7 +72,7 @@ for task_circle = [1:5]*1e9
     k,...                           % 芯片能耗系数
     userNumber,serverNumber,sub_bandNumber,...
     10e-9,...                       % 温度下界
-    0.95,...                        % 温度的下降率
+    0.97,...                        % 温度的下降率
     5 ...                           % 邻域解空间的大小
     );
     annealing_time(time) = toc;
@@ -117,13 +117,16 @@ for task_circle = [1:5]*1e9
     index = index + 1;
 end
 
+x = 1:5;
 figure
-plot(1:5,annealing_objective_mean);
+plot(x,annealing_objective_mean,'-s');
 hold on
-plot(1:5,hJTORA_objective_mean);
+plot(x,hJTORA_objective_mean,'-d');
 hold on
-plot(1:5,greedy_objective_mean);
+plot(x,greedy_objective_mean,'-o');
 hold on
-plot(1:5,localSearch_objective_mean);
+plot(x,localSearch_objective_mean,'-x');
 xlabel('工作负载(兆周期)');
 ylabel('平均目标函数值');
+grid on
+legend('模拟退火算法','hJTORA算法','贪心算法','局部搜索算法');

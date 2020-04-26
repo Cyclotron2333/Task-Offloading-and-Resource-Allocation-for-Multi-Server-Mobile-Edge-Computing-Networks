@@ -43,17 +43,17 @@ for task_size = [0.2:0.2:1.6] * MB
     test_time = 20;  %每个算法循环次数
 
     annealing_time = zeros(test_time,1);
-    hJTORA_time = zeros(test_time,1);
+    hJTORA_time = zeros(5,1);
     greedy_time = zeros(test_time,1);
     localSearch_time = zeros(test_time,1);
     
     annealing_objective = zeros(test_time,1);
-    hJTORA_objective = zeros(test_time,1);
+    hJTORA_objective = zeros(5,1);
     greedy_objective = zeros(test_time,1);
     localSearch_objective = zeros(test_time,1);
 
     %hJTORA算法
-    for time = 1: 5    
+    parfor time = 1: 5    
     tic;
     [J0,X0,F0] = optimize_hJTORA(Fu,Fs,Tu,W,Pu,H,...
     lamda,Sigma_square,beta_time,beta_enengy,...
@@ -72,7 +72,7 @@ for task_size = [0.2:0.2:1.6] * MB
     k,...                           % 芯片能耗系数
     userNumber,serverNumber,sub_bandNumber,...
     10e-9,...                       % 温度下界
-    0.95,...                        % 温度的下降率
+    0.97,...                        % 温度的下降率
     5 ...                           % 邻域解空间的大小
     );
     annealing_time(time) = toc;
@@ -119,12 +119,14 @@ end
 
 x = 0.2:0.2:1.6;
 figure
-plot(x,annealing_objective_mean);
+plot(x,annealing_objective_mean,'-s');
 hold on
-plot(x,hJTORA_objective_mean);
+plot(x,hJTORA_objective_mean,'-d');
 hold on
-plot(x,greedy_objective_mean);
+plot(x,greedy_objective_mean,'-o');
 hold on
-plot(x,localSearch_objective_mean);
+plot(x,localSearch_objective_mean,'-x');
 xlabel('数据大小(MB)');
 ylabel('平均目标函数值');
+grid on
+legend('模拟退火算法','hJTORA算法','贪心算法','局部搜索算法');

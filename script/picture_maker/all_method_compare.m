@@ -71,7 +71,7 @@ for task_circle = [250e6 500e6 1000e6 2000e6]    %100 Megacycles
     k,...                           % 芯片能耗系数
     userNumber,serverNumber,sub_bandNumber,...
     10e-9,...                       % 温度下界
-    0.95,...                        % 温度的下降率
+    0.97,...                        % 温度的下降率
     5 ...                           % 邻域解空间的大小
     );
     annealing_time(time) = toc;
@@ -132,8 +132,10 @@ vals = [annealing_objective_mean(1),hJTORA_objective_mean(1),greedy_objective_me
     annealing_objective_mean(3),hJTORA_objective_mean(3),greedy_objective_mean(3),localSearch_objective_mean(3),exhausted_objective(3);
     annealing_objective_mean(4),hJTORA_objective_mean(4),greedy_objective_mean(4),localSearch_objective_mean(4),exhausted_objective(4)];
 b = bar(vals,0.4);
-xlabel('任务负载(Megacycles)');
+xlabel('任务负载/兆周期');
 ylabel('目标函数值');
+grid on
+legend('模拟退火算法','hJTORA算法','贪心算法','局部搜索算法','穷举算法');
 
 figure
 vals = [annealing_time_mean(1),hJTORA_time_mean(1),greedy_time_mean(1),localSearch_time_mean(1),exhausted_time(1);
@@ -141,5 +143,7 @@ vals = [annealing_time_mean(1),hJTORA_time_mean(1),greedy_time_mean(1),localSear
     annealing_time_mean(3),hJTORA_time_mean(3),greedy_time_mean(3),localSearch_time_mean(3),exhausted_time(3);
     annealing_time_mean(4),hJTORA_time_mean(4),greedy_time_mean(4),localSearch_time_mean(4),exhausted_time(4)];
 b = bar(vals,0.4);
-xlabel('任务负载(Megacycles)');
-ylabel('计算时间');
+xlabel('任务负载/兆周期');
+ylabel('计算时间/s');
+grid on
+legend('模拟退火算法','hJTORA算法','贪心算法','局部搜索算法','穷举算法');

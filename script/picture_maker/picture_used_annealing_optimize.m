@@ -56,13 +56,12 @@ function [max_objective, X, F, time, energy] = ta( ...
 )
 %TA Task allocation,任务分配算法，采用模拟退火算法
 
-    T = userNumber * 0.15;    
+    T = userNumber;    
 
     [x_old,fx_old,F,time,energy] = genOriginX(userNumber,serverNumber,sub_bandNumber,para);    %得到初始解
     
     picture = zeros(2,1);
     iterations = 1;
-    threshold = 7;
     max_objective = fx_old;
     X = x_old;
     
@@ -92,11 +91,7 @@ function [max_objective, X, F, time, energy] = ta( ...
         picture(iterations,1) = T;
         picture(iterations,2) = fx_old;
         iterations = iterations + 1;
-        if iterations <= threshold
-             T=T/log(1+iterations);
-        else
-             T=T*alpha;
-        end
+        T=T*alpha;
     end
     [user,~] = find(~any(F,2));
     time = time + sum(para.tu_local(user));

@@ -49,7 +49,7 @@ for index = 1:4
     k,...                           % 芯片能耗系数
     userNumber,serverNumber,sub_bandNumber,...
     10e-9,...                       % 温度下界
-    0.95,...                        % 温度的下降率
+    0.97,...                        % 温度的下降率
     5 ...                           % 邻域解空间的大小
     );
     annealing_time(time) = toc;
