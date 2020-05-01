@@ -4,4 +4,6 @@ Task Offloading and Resource Allocation for Multi-Server Mobile-Edge Computing N
 
 本科毕设，Unfinished
 
-想要运行看看效果可以运行test里的optimizeTest
+想要运行看看效果可以运行script/test里的optimizeTest
+
+或者直接看test_figure里的效果图
