@@ -9,7 +9,7 @@
  
 ### &emsp;&emsp;2.模型
 &emsp;&emsp;模型主要参考论文—— T. X. Tran and D. Pompili. Joint Task Offloading and Resource Allocation for Multi-Server Mobile-Edge Computing Networks[J]. IEEE Transactions on Vehicular Technology. 68(1). 2019,1: 856-868.  
-本项目的模型在其基础上考虑了蜂窝小区内子信道简单时分复用的效果（将子信道复用机制融入到通信资源分配中，即单个基站的多个用户可以同时使用一个子信道了），但取消了对用户设备发射功率的优化（设为常数）；
+&emsp;&emsp;本项目的模型在其基础上考虑了蜂窝小区内子信道简单时分复用的效果（将子信道复用机制融入到通信资源分配中，即单个基站的多个用户可以同时使用一个子信道了），但取消了对用户设备发射功率的优化（设为常数）；
 &emsp;&emsp;本项目对于计算资源分配的算法与参考论文相同，都是使用KKT条件求解，具体求解函数为script/cra.m.  
 &emsp;&emsp;但在X矩阵的求解上使用了自己设计的启发式算法，实现在task_allocation.m（调用完整求解是要使用定义在script/optimize_annealing.m中的函数）。  
 &emsp;&emsp;原文的算法的实现在script/other_algorithm/optimize_hJTORA.m *（可能是本人的能力问题，计算时间挺长的）*
