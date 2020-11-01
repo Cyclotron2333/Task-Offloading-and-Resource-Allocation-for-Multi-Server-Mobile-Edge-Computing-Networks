@@ -18,9 +18,9 @@
 
 ## &emsp;&emsp;3.测试（运行）
 &emsp;&emsp;首先，我个人设计的算法的入口为script/optimize_annealing.m。需要输入算法所使用的参数，算法输出有三个——卸载决策矩阵X，服务器资源分配矩阵F，目标函数值J  
-&emsp;&emsp;其他算法的入口在script/other_algorithm中，直接调用即可，输出同上述
-&emsp;&emsp;如果想要运行看看效果可以运行script/simulation里的optimizeTest.m，这是一个测试文件，里面还包含测试其他算法（穷举法、贪心算法等等）的代码
-&emsp;&emsp;也可以直接看test_figure里的效果图
+&emsp;&emsp;其他算法的入口在script/other_algorithm中，直接调用即可，输出同上述  
+&emsp;&emsp;如果想要运行看看效果可以运行script/simulation里的optimizeTest.m，这是一个测试文件，里面还包含测试其他算法（穷举法、贪心算法等等）的代码  
+&emsp;&emsp;也可以直接看test_figure里的效果图  
 
 
 
