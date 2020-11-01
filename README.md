@@ -15,8 +15,8 @@
 &emsp;&emsp;原文的算法的实现在script/other_algorithm/optimize_hJTORA.m *（可能是本人的能力问题，计算时间挺长的）* 
 下面贴一些公式的截图，方便有兴趣的朋友理解
 首先是目标函数及其约束：  
-<div style="align: center">
-    <img src="https://raw.githubusercontent.com/Cyclotron2333/img-folder/master/%E7%9B%AE%E6%A0%87%E5%87%BD%E6%95%B0.png" width = 50% height = 50%/>
+<div align=center>
+    <img src="https://raw.githubusercontent.com/Cyclotron2333/img-folder/master/%E7%9B%AE%E6%A0%87%E5%87%BD%E6%95%B0.png" width = 35% height = 35%/>
     <p>
     <img src="https://github.com/Cyclotron2333/img-folder/blob/master/%E7%BA%A6%E6%9D%9F%E6%9D%A1%E4%BB%B6.png" width = 30% height = 30%/>
 </div>  
@@ -35,13 +35,13 @@
 信息传输速率计算：  
 <div style="align: center">
     <p>
-    <img src="https://github.com/Cyclotron2333/img-folder/blob/master/%E4%BF%A1%E6%81%AF%E4%BC%A0%E8%BE%93%E9%80%9F%E7%8E%87.png" width = 50% height = 50%/>
+    <img src="https://github.com/Cyclotron2333/img-folder/blob/master/%E4%BF%A1%E6%81%AF%E4%BC%A0%E8%BE%93%E9%80%9F%E7%8E%87.png" width = 35% height = 35%/>
     <p>
 </div>  
 时延和能耗计算：  
 <div style="align: center">
     <p>
-    <img src="https://github.com/Cyclotron2333/img-folder/blob/master/%E6%97%B6%E5%BB%B6%E5%92%8C%E8%83%BD%E8%80%97.png" width = 50% height = 50%/>
+    <img src="https://github.com/Cyclotron2333/img-folder/blob/master/%E6%97%B6%E5%BB%B6%E5%92%8C%E8%83%BD%E8%80%97.png" width = 35% height = 35%/>
      <p>
 </div>  
 
