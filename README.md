@@ -12,8 +12,29 @@
 &emsp;&emsp;模型主要参考论文—— T. X. Tran and D. Pompili. Joint Task Offloading and Resource Allocation for Multi-Server Mobile-Edge Computing Networks[J]. IEEE Transactions on Vehicular Technology. 68(1). 2019,1: 856-868。**本项目的模型在不改变参考论文目标函数表达式的基础上将每个MEC设备的发射功率设置为常数，即不考虑对发射功率的优化，并考虑了蜂窝小区内子信道简单时分复用的效果（将子信道复用机制融入到通信资源分配中，即单个基站的多个用户可以同时使用一个子信道了）**  
 &emsp;&emsp;求解目标为**卸载决策矩阵X和服务器计算资源分配矩阵F**  
 &emsp;&emsp;本项目对于计算资源分配的算法与参考论文相同，都是使用KKT条件求解，具体求解函数为script/cra.m，但在X矩阵的求解上使用了自己设计的启发式算法，实现在task_allocation.m（调用完整求解是要使用定义在script/optimize_annealing.m中的函数）。  
-&emsp;&emsp;原文的算法的实现在script/other_algorithm/optimize_hJTORA.m *（可能是本人的能力问题，计算时间挺长的）*  
-
+&emsp;&emsp;原文的算法的实现在script/other_algorithm/optimize_hJTORA.m *（可能是本人的能力问题，计算时间挺长的）* 
+下面贴一些公式的截图，方便有兴趣的朋友理解
+首先是目标函数及其约束：  
+<div style="align: center">
+    <img src="https://raw.githubusercontent.com/Cyclotron2333/img-folder/master/%E7%9B%AE%E6%A0%87%E5%87%BD%E6%95%B0.png"/>
+    <img src="https://github.com/Cyclotron2333/img-folder/blob/master/%E7%BA%A6%E6%9D%9F%E6%9D%A1%E4%BB%B6.png"/>
+</div>  
+拆解后的目标函数（代码中使用的）：  
+<div style="align: center">
+    <img src="https://github.com/Cyclotron2333/img-folder/blob/master/J(X%2CF).png"/>
+</div>  
+其中的信噪比计算：
+<div style="align: center">
+    <img src="https://github.com/Cyclotron2333/img-folder/blob/master/%E4%BF%A1%E5%99%AA%E6%AF%94.png"/>
+</div>  
+信息传输速率计算：  
+<div style="align: center">
+    <img src="https://github.com/Cyclotron2333/img-folder/blob/master/%E4%BF%A1%E6%81%AF%E4%BC%A0%E8%BE%93%E9%80%9F%E7%8E%87.png"/>
+</div>  
+时延和能耗计算：  
+<div style="align: center">
+    <img src="https://github.com/Cyclotron2333/img-folder/blob/master/%E6%97%B6%E5%BB%B6%E5%92%8C%E8%83%BD%E8%80%97.png"/>
+</div>  
 
 
 ## &emsp;&emsp;3.测试（运行）
