@@ -13,7 +13,8 @@
 &emsp;&emsp;求解目标为**卸载决策矩阵X和服务器计算资源分配矩阵F**  
 &emsp;&emsp;本项目对于计算资源分配的算法与参考论文相同，都是使用KKT条件求解，具体求解函数为script/cra.m，但在X矩阵的求解上使用了自己设计的启发式算法，实现在task_allocation.m（调用完整求解是要使用定义在script/optimize_annealing.m中的函数）。  
 &emsp;&emsp;原文的算法的实现在script/other_algorithm/optimize_hJTORA.m *（可能是本人的能力问题，计算时间挺长的）*   
-下面贴一些公式的截图，方便有兴趣的朋友理解
+&emsp;&emsp;下面贴一些公式的截图，方便有兴趣的朋友理解  
+
 首先是目标函数及其约束：  
 <div align=center>
     <img src="https://raw.githubusercontent.com/Cyclotron2333/img-folder/master/%E7%9B%AE%E6%A0%87%E5%87%BD%E6%95%B0.png" width = 35% height = 35%/>
